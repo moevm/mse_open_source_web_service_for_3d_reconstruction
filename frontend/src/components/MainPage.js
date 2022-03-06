@@ -15,10 +15,10 @@ class MainPage extends React.Component {
 
     render() {
         return (
-            <>
+            <div data-testid={'main-page'}>
                 <MainNavbar/>
                 {this.defineContent()}
-            </>)
+            </div>)
     }
 }
 

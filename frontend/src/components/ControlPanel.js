@@ -4,7 +4,7 @@ import {Button, Container} from "@mui/material";
 class ControlPanel extends React.Component {
     render() {
         return (
-            <Container maxWidth={'xl'} sx={{
+            <Container data-testid={'control-panel'} maxWidth={'xl'} sx={{
                 display: 'flex',
                 justifyContent: 'flex-end',
                 marginTop: 2,

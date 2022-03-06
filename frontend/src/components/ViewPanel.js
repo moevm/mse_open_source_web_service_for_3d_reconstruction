@@ -1,11 +1,24 @@
 import React from 'react'
 import {Box, Button, Grid, Typography} from "@mui/material";
-import { GLTFModel, AmbientLight, DirectionLight } from "react-3d-viewer";
+import { Canvas } from "@react-three/fiber";
+import { useLoader } from "@react-three/fiber";
+import { Environment, OrbitControls } from "@react-three/drei";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { Suspense } from "react";
+import * as THREE from "three";
+import { DDSLoader } from "three-stdlib";
+
+THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
+
+const Scene = () => {
+    const obj = useLoader(OBJLoader, '/Poimandres.obj')
+    return <primitive object={obj} scale={0.4}/>
+};
 
 class ViewPanel extends React.Component {
     render(){
         return (
-            <Grid container spacing={2}>
+            <Grid data-testid={'view-panel'} container spacing={2}>
                 <Grid item xl={6} xs={12}>
                     <Typography variant={'h4'}> Please, choose your images: </Typography>
                     <input
@@ -24,22 +37,13 @@ class ViewPanel extends React.Component {
                 <Grid item xl={6} xs={12}>
                     <>
                         <Typography variant={'h4'}> 3D model will be displayed here: </Typography>
-                        <GLTFModel
-                            height={window.innerHeight / 2 /* + AND - AS DESIRED*/}
-                            //width={window.innerWidth /* + AND - AS DESIRED*/}
-                            // src="./src/lib/model/DamagedHelmet.gltf"
-                            src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf"
-                        >
-                            <AmbientLight color={0xffffff} />
-                            <DirectionLight
-                                color={0xffffff}
-                                position={{ x: 100, y: 200, z: 100 }}
-                            />
-                            <DirectionLight
-                                color={0xff00ff}
-                                position={{ x: -500, y: 200, z: -100 }}
-                            />
-                        </GLTFModel>
+                        <Canvas style={{ maxHeight: 300}}>
+                            <Suspense fallback={null}>
+                                <Scene />
+                                <OrbitControls />
+                                <Environment preset="sunset" background />
+                            </Suspense>
+                        </Canvas>
                     </>
                 </Grid>
             </Grid>

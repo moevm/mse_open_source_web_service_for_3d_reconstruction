@@ -13,7 +13,7 @@ class AuthPage extends React.Component {
 
     render() {
         return (
-            <Container maxWidth={'sm'}>
+            <Container maxWidth={'sm'} data-testid={'auth-page'}>
                 {this.chooseComponent(this.props.mode)}
             </Container>
         )

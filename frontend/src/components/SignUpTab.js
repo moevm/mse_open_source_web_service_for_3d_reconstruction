@@ -4,7 +4,7 @@ import {Button, Container, Link, Paper, TextField, Typography} from "@mui/materi
 class SignUpTab extends React.Component {
     render(){
         return (
-            <Paper elevation={6} sx={{
+            <Paper data-testid={'sign-up-tab'} elevation={6} sx={{
                 p: 2,
                 minWidth: 300,
                 marginTop: 10

@@ -6,7 +6,7 @@ import {Container} from "@mui/material";
 class BoilerplateTab extends React.Component {
     render(){
         return (
-            <Container sx={{ marginTop: 4}}>
+            <Container data-testid={'boilerplate-tab'} sx={{ marginTop: 4}}>
                 <ViewPanel/>
                 <ControlPanel/>
             </Container>

@@ -4,8 +4,8 @@ import {Container, Typography} from "@mui/material";
 class InfoTab extends React.Component {
     render(){
         return (
-            <Container maxWidth={'xl'}>
-                <Typography variant="h2" data-testid={'info-tab'} marginTop={1}>
+            <Container data-testid={'info-tab'} maxWidth={'xl'}>
+                <Typography variant="h2" marginTop={1}>
                     Welcome to the open source web service for 3d reconstruction!
                 </Typography>
                 <Typography marginTop={1}>

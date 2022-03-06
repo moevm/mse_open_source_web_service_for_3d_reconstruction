@@ -14,7 +14,7 @@ const darkTheme = createTheme({
 class MainNavbar extends React.Component {
     createAppBar() {
         return (
-            <Container maxWidth={'xl'} sx={{
+            <Container data-testid={'main-navbar'} maxWidth={'xl'} sx={{
                 display: 'flex',
                 justifyContent: 'flex-end'
             }}>
