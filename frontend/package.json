@@ -57,7 +57,6 @@
     "plugins": [
       "@babel/plugin-transform-modules-commonjs",
       "@babel/plugin-transform-react-jsx"
-
     ]
   },
   "jest": {
@@ -72,6 +71,7 @@
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.16.8",
     "@babel/preset-env": "^7.16.11",
+    "@babel/preset-flow": "^7.16.7",
     "@babel/preset-react": "^7.16.7",
     "@react-three/test-renderer": "^7.0.25",
     "@types/jest": "^27.4.1",
