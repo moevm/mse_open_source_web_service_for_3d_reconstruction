@@ -6,16 +6,23 @@ from pathlib import Path
 # Absolute path of this file
 dirname = os.path.dirname(os.path.abspath(__file__))
 
+def createDir(path):
+    try:
+        os.mkdir(path)
+    except:
+        pass
+
 def run(bin_path, mg_path, img_path, additional_parameters):
     sensor_database = bin_path + "/aliceVision/share/aliceVision/cameraSensors.db"
     tree = bin_path + "/aliceVision/share/aliceVision/vlfeat_K80L3.SIFT.tree"
 
+    createDir("{}/result".format(dirname))
     cmd = "{}/meshroom_batch ".format(bin_path) + \
         "--input {} ".format(img_path)  + \
         "--cache {}/cache ".format(dirname) + \
         "--pipeline {} ".format(mg_path) + \
         "--paramOverrides CameraInit.sensorDatabase={} ImageMatching.tree={} ".format(sensor_database, tree) + \
-        "--output {}/result ".format(dirname) + \
+        "--output {}/result/{} ".format(dirname, Path(img_path).name) + \
         " ".join(additional_parameters)
     
     print(cmd)
