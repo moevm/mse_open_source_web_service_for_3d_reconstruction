@@ -9,6 +9,7 @@ import {createStore} from "redux";
 import authReducer from "../store/reducers/authReducer";
 import store from "../store/store";
 import RequireAuth from "./RequireAuth";
+import signOutCreator from "../store/actionCreators/signOutCreator";
 
 
 class App extends React.Component {
@@ -16,7 +17,10 @@ class App extends React.Component {
         return (
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<MainPage display={"info"}/>} />
+                    <Route path="/" element={<MainPage logout={
+                        (value) => {
+                            store.dispatch(signOutCreator());
+                        }} display={"info"}/>} />
                     <Route path="/signin" element={<AuthPage login={
                         (value) => {
                             store.dispatch(signInCreator(value));
@@ -29,7 +33,11 @@ class App extends React.Component {
                     } mode={'signup'}/>} />
                     <Route path="/main/authorized" element={
                         <RequireAuth>
-                            <MainPage display={"action"}/>
+                            <MainPage logout={
+                                (value) => {
+                                    store.dispatch(signOutCreator());
+                                }
+                            } display={"action"}/>
                         </RequireAuth>
                     } />
                     <Route path="/*" element={<NotFoundPage/>} />

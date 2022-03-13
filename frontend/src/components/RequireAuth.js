@@ -8,7 +8,7 @@ export default class RequireAuth extends React.Component {
     }
 
     render(){
-        if (store.getState().login === ''){
+        if (store.getState().username === ''){
             return <Navigate to="/" replace />;
         }
         return this.props.children;

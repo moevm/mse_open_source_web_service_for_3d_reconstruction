@@ -17,13 +17,17 @@ class MainNavbar extends React.Component {
         super(props);
     }
 
+    logout = () => {
+        this.props.logout();
+    }
+
     isLogged(mode){
         if (mode === 'action'){
             console.log(store.getState())
             return (
                 <Toolbar>
-                    <span style={{ marginRight: '1em'}}> Signed as: {store.getState().login} </span>
-                    <Button href={'/signup'} color={'error'}> Sign out </Button>
+                    <span style={{ marginRight: '1em'}}> Signed as: {store.getState().username} </span>
+                    <Button onClick={this.logout} href={'/signup'} color={'error'}> Sign out </Button>
                 </Toolbar>
             )
         }

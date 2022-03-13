@@ -8,7 +8,7 @@ class AuthPage extends React.Component {
         if (mode === 'signin') {
             return <SignInTab login={this.props.login}/>;
         }
-        return <SignUpTab/>;
+        return <SignUpTab login={this.props.login}/>;
     }
 
     render() {

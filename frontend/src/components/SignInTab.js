@@ -6,7 +6,13 @@ import { Navigate } from "react-router-dom";
 class SignInTab extends React.Component {
     constructor(props){
         super(props);
-        this.state = { login: "", password: "", redirect: false};
+        this.state = {
+            login: "",
+            password: "",
+            email: "",
+            redirect: false,
+            token: ""
+        };
         this.login = this.login.bind(this)
     }
 
@@ -18,57 +24,66 @@ class SignInTab extends React.Component {
         this.setState({password: event.target.value});
     }
 
-    storeLogin = () => {
-        this.props.login(this.state.login);
+    handleEmail = (event) => {
+        this.setState({email: event.target.value});
     }
 
-    login(event){
-        let name = this.state.login;
-        let password = this.state.password;
-        this.setState({redirect: true});
-        this.storeLogin();
-        /*axios({
-            method: "POST",
+    storeLogin = () => {
+        this.props.login({
+            username: this.state.login,
+            email: this.state.email,
+            token: this.state.token
+        });
+    }
+
+    isInputValid = () => {
+        return !(this.state.login === "" || this.state.password.length < 8 || !this.state.email.match(/.+@.+/));
+    }
+
+    login(){
+        if (!this.isInputValid()){
+            alert('Please, fill all fields! Password must contain at least 8 symbols.')
+            return;
+        }
+
+        let requestUrl = 'http://localhost:8000/api/users/login/';
+
+        let requestData = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
-                'name': name,
-                'password': password
+                "user": {
+                    username: this.state.login,
+                    email: this.state.email,
+                    password: this.state.password
+                }
             })
-        }).then((response) => {
-            this.setState({
-                redirect: Boolean(response.text())
-            });
-            if (this.state.redirect === true){
+        }
+
+        fetch(requestUrl, requestData).then(
+            (response) => {
+                return response.json();
+            }
+        ).then((response) => {
+            if (response.errors === undefined){
+                console.log(response);
+                this.setState({token: response.user.token});
                 this.storeLogin();
+                console.log(this.state);
+                this.setState({
+                    redirect: true
+                });
             }
         }).catch((err) => {
             console.log(err);
-        });*/
-
-        /*fetch("http://localhost:8000/authorization/check/", {
-            method: "POST",
-            body: JSON.stringify({name: name,password: password})
-        })
-            .then(
-                (result) => {
-                    this.setState({
-                        isAuth: result.text().then(text => text.toString())
-                    });
-
-                }
-            )*/
+        });
     }
 
     componentWillUnmount() {
         this.setState({redirect: false});
     }
-
-    /*smth(){
-        if (this.state.isAuth === "True"){
-            console.log("SignedIn")
-        }else{
-            console.log("NO")
-        }
-    }*/
 
     render(){
         return (
@@ -81,8 +96,9 @@ class SignInTab extends React.Component {
                     <Container>
                         <Typography variant={'h3'} align={'center'}> Sign in </Typography>
                         <Typography align={'center'}> Do not have an account? Sign up <Link href={'/signup'}> here </Link> </Typography>
-                        <TextField onChange={this.handleLogin} value={this.state.login} fullWidth label="Login" margin="normal" variant="standard"> </TextField> <br/>
-                        <TextField fullWidth label="Password" margin="normal" type={'password'} variant="standard"> </TextField> <br/>
+                        <TextField onChange={this.handleLogin} value={this.state.login} fullWidth label={'Login'} margin="normal" variant="standard" > </TextField> <br/>
+                        <TextField onChange={this.handleEmail} value={this.state.email} fullWidth label={'E-mail'} margin="normal" variant="standard" > </TextField> <br/>
+                        <TextField onChange={this.handlePassword} fullWidth label="Password" margin="normal" type={'password'} variant="standard" > </TextField> <br/>
                         <Button onClick={this.login} variant="outlined" sx={{marginTop: 1}}> Sign in </Button>
                     </Container>
                 </form>

@@ -10,7 +10,9 @@ class SignUpTab extends React.Component {
             redirect: false,
             login: "",
             password: "",
-            confirmedPassword: ""
+            email: "",
+            confirmedPassword: "",
+            token: ""
         };
     }
 
@@ -30,33 +32,66 @@ class SignUpTab extends React.Component {
         this.setState({confirmedPassword: event.target.value});
     }
 
+    handleEmail = (event) => {
+        this.setState({email: event.target.value});
+    }
+
     storeLogin = () => {
-        this.props.login(this.state.login);
+        this.props.login({
+            username: this.state.login,
+            email: this.state.email,
+            token: this.state.token
+        });
+    }
+
+    isInputValid = () => {
+        return !(this.state.login === "" || this.state.password.length < 8
+            || this.state.confirmedPassword.length < 8 || !this.state.email.match(/.+@.+/));
     }
 
     signUp = () => {
+        if (!this.isInputValid()){
+            alert('Please, fill all fields! Password must contain at least 8 symbols.')
+            return;
+        }
         if (this.state.password !== this.state.confirmedPassword){
             alert('Passwords do not match!');
             return;
         }
-        this.setState({redirect: true});
-        this.storeLogin();
-        /*axios({
-            method: "POST",
+
+        let requestUrl = 'http://localhost:8000/api/users/';
+        let requestData = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
-                'name': this.state.login,
-                'password': this.state.password
+                "user": {
+                    username: this.state.login,
+                    email: this.state.email,
+                    password: this.state.password
+                }
             })
-        }).then((response) => {
-            this.setState({
-                redirect: Boolean(response.text())
-            });
-            if (this.state.redirect === true){
+        }
+
+        fetch(requestUrl, requestData).then(
+            (response) => {
+                return response.json();
+            }
+        ).then((response) => {
+            if (response.errors === undefined){
+                console.log(response);
+                this.setState({token: response.user.token});
                 this.storeLogin();
+                console.log(this.state);
+                this.setState({
+                    redirect: true
+                });
             }
         }).catch((err) => {
             console.log(err);
-        });*/
+        });
+
     }
 
     render(){
@@ -70,9 +105,10 @@ class SignUpTab extends React.Component {
                     <Container>
                         <Typography variant={'h3'} align={'center'}> Sign up </Typography>
                         <Typography align={'center'}> Already have an account? Sign in <Link href={'/signin'}> here </Link> </Typography>
-                        <TextField onChange={this.handleLogin} fullWidth label="Login" margin="normal" variant="standard"> </TextField> <br/>
-                        <TextField onChange={this.handlePassword} fullWidth label="Password" margin="normal" type={'password'} variant="standard"> </TextField> <br/>
-                        <TextField onChange={this.handleConfirmedPassword} fullWidth label="Confirm password" margin="normal" type={'password'} variant="standard"> </TextField>
+                        <TextField onChange={this.handleLogin} fullWidth label="Login" margin="normal" variant="standard" > </TextField> <br/>
+                        <TextField onChange={this.handleEmail} fullWidth label="E-mail" margin="normal" variant="standard" > </TextField> <br/>
+                        <TextField onChange={this.handlePassword} fullWidth label="Password" margin="normal" type={'password'} variant="standard" > </TextField> <br/>
+                        <TextField onChange={this.handleConfirmedPassword} fullWidth label="Confirm password" margin="normal" type={'password'} variant="standard" > </TextField>
                         <Button onClick={this.signUp} variant="outlined" sx={{marginTop: 1}}> Sign up </Button>
                     </Container>
                 </form>

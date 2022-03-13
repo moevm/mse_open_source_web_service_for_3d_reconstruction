@@ -1,5 +1,7 @@
 const initialState = {
-    login: ''
+    username: '',
+    email: '',
+    token: ''
 };
 
 export default initialState;
