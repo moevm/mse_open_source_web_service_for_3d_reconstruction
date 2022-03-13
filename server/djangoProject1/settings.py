@@ -15,17 +15,17 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ORIGIN_ALLOW_ALL = True
-
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
-
-CORS_REPLACE_HTTPS_REFERER = True
-
-CSRF_COOKIE_SECURE = False
-
-CSRF_COOKIE_HTTPONLY = False
+# CORS_ALLOW_CREDENTIALS = True
+#
+# CORS_ORIGIN_ALLOW_ALL = True
+#
+# CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
+#
+# CORS_REPLACE_HTTPS_REFERER = True
+#
+# CSRF_COOKIE_SECURE = False
+#
+# CSRF_COOKIE_HTTPONLY = False
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'authorization.apps.AuthorizationConfig',
     'rest_framework',
     'corsheaders',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'djangoProject1.urls'
@@ -123,3 +125,21 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Рассказать Django о созданной нами кастомной модели пользователя. Строка
+# authentication.User сообщает Django, что мы ссылаемся на модель User в модуле
+# authentication. Этот модуль зарегистрирован выше в настройке INSTALLED_APPS.
+AUTH_USER_MODEL = 'authorization.User'
+USERNAME_FIELD = 'email'
+
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'authorization.exceptions.core_exception_handler',
+    'NON_FIELD_ERRORS_KEY': 'error',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'authorization.backends.JWTAuthentication',
+    ),
+}
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000"
+]
