@@ -16,7 +16,7 @@ class MainPage extends React.Component {
     render() {
         return (
             <div data-testid={'main-page'}>
-                <MainNavbar/>
+                <MainNavbar logout={this.props.logout} display={this.props.display}/>
                 {this.defineContent()}
             </div>)
     }

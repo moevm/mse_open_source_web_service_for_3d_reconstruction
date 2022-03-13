@@ -6,9 +6,9 @@ import SignInTab from "./SignInTab";
 class AuthPage extends React.Component {
     chooseComponent(mode) {
         if (mode === 'signin') {
-            return <SignInTab/>;
+            return <SignInTab login={this.props.login}/>;
         }
-        return <SignUpTab/>;
+        return <SignUpTab login={this.props.login}/>;
     }
 
     render() {
