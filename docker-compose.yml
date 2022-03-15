@@ -1,0 +1,13 @@
+version: "3.5"
+
+services:
+    backend:
+        container_name: "3d-backend"
+        restart: unless-stopped
+        build: ./backend
+        network_mode: host
+    frontend:
+        container_name: "3d-frontend"
+        restart: unless-stopped
+        build: ./frontend
+        network_mode: host
