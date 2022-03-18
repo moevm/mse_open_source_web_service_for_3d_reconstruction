@@ -1,13 +1,32 @@
-version: "3.5"
+version: "3.8"
 
 services:
-    backend:
-        container_name: "3d-backend"
-        restart: unless-stopped
-        build: ./backend
-        network_mode: host
-    frontend:
-        container_name: "3d-frontend"
-        restart: unless-stopped
-        build: ./frontend
-        network_mode: host
+  db:
+    container_name: "3d_db"
+    image: postgres:14
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+  backend:
+    container_name: "3d_backend"
+    build: ./backend
+    restart: unless-stopped
+    command: python3 manage.py runserver 0.0.0.0:8000
+    network_mode: host
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+  frontend:
+    container_name: "3d_frontend"
+    restart: unless-stopped
+    build: ./frontend
+    network_mode: host
+
+volumes:
+  postgres_data:
