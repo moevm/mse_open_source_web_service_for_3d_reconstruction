@@ -1,5 +1,5 @@
 import React from 'react'
-import {Box, Button, Grid, Typography} from "@mui/material";
+import {Box, Button, Container, Grid, Typography} from "@mui/material";
 import { Canvas } from "@react-three/fiber";
 import { useLoader } from "@react-three/fiber";
 import { Environment, OrbitControls } from "@react-three/drei";
@@ -20,19 +20,32 @@ class ViewPanel extends React.Component {
     constructor(props){
         super(props);
         this.state = {
-            photos: []
+            photos: [],
+            file: '',
+            imagePreviewUrl: ''
         }
     }
 
     handleUpload = (event) => {
-        const data = new FormData();
+        let reader = new FileReader();
+        let file = event.target.files[0];
+
+        reader.onloadend = () => {
+            this.setState({
+                file: file,
+                imagePreviewUrl: reader.result
+            });
+        }
+
+        reader.readAsDataURL(file)
+        /*const data = new FormData();
         data.append('file', event.target.files[0]);
         let requestUrl = 'http://localhost:8000/upload';
         const config = {
             headers: { 'content-type': 'multipart/form-data' }
         }
 
-        console.log(event.target.files);
+        console.log(event.target.files);*/
 
         //axios.post(requestUrl, data, config)
         //    .then((response) => {
@@ -52,11 +65,33 @@ class ViewPanel extends React.Component {
                 ))}
     </Grid>
     */
+    displayImage(){
+        if (this.state.imagePreviewUrl){
+            return (
+                <Grid item xl={6} xs={12}>
+                        <img style={{width: '100px', height: 'auto', marginTop: '1em', marginLeft: "1em"}} src={this.state.imagePreviewUrl} alt={'user photo'} />
+                </Grid>
+            )
+        }
+        return null;
+    }
+
     render(){
         return (
+            <>
             <Grid data-testid={'view-panel'} container spacing={2}>
                 <Grid item xl={6} xs={12}>
                     <Typography variant={'h4'}> Please, choose your images: </Typography>
+                    <Box
+                        sx={{
+                            width: '100%',
+                            height: 300,
+                            border: '1px solid grey'
+                        }}
+                    >
+                        {this.displayImage()}
+                    </Box>
+
                     <input
                         accept="image/*"
                         style={{ display: 'none' }}
@@ -65,11 +100,7 @@ class ViewPanel extends React.Component {
                         type="file"
                         onChange={this.handleUpload}
                     />
-                    <label htmlFor="raised-button-file">
-                        <Button variant="raised" component="span" sx={{ marginLeft: '30%', marginTop: '10%' }}>
-                            Upload
-                        </Button>
-                    </label>
+
                 </Grid>
                 <Grid item xl={6} xs={12}>
                     <>
@@ -84,6 +115,20 @@ class ViewPanel extends React.Component {
                     </>
                 </Grid>
             </Grid>
+            <Container data-testid={'control-panel'} maxWidth={'xl'} sx={{
+                display: 'flex',
+                justifyContent: 'flex-start',
+                marginTop: 2,
+                marginBottom: 2
+            }}>
+                <label htmlFor="raised-button-file">
+                    <Button variant="raised" component="span" >
+                        Upload
+                    </Button>
+                </label>
+                <Button style={{marginLeft: '1em'}}> Start </Button>
+            </Container>
+            </>
         );
     }
 }
