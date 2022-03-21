@@ -2,17 +2,21 @@ import React from 'react'
 import {Button, Container, Link, Paper, TextField, Typography} from "@mui/material";
 import axios from "axios";
 import {Navigate} from "react-router-dom";
+import AuthDialog from "./AuthDialog";
 
 class SignUpTab extends React.Component {
     constructor(props){
         super(props);
         this.state = {
             redirect: false,
+            authAlert: false,
+            authAlertMode: 'signup',
             login: "",
             password: "",
             email: "",
             confirmedPassword: "",
-            token: ""
+            token: "",
+            error: ""
         };
     }
 
@@ -36,6 +40,16 @@ class SignUpTab extends React.Component {
         this.setState({email: event.target.value});
     }
 
+    handleDialogClose = () => {
+        this.setState({authAlert: false});
+        this.setState({authAlertMode: 'signup'});
+    }
+
+    enableDialog(value){
+        this.setState({authAlert: true});
+        this.setState({authAlertMode: value});
+    }
+
     storeLogin = () => {
         this.props.login({
             username: this.state.login,
@@ -51,11 +65,11 @@ class SignUpTab extends React.Component {
 
     signUp = () => {
         if (!this.isInputValid()){
-            alert('Please, fill all fields! Password must contain at least 8 symbols.')
+            this.enableDialog('signup');
             return;
         }
         if (this.state.password !== this.state.confirmedPassword){
-            alert('Passwords do not match!');
+            this.enableDialog('password');
             return;
         }
 
@@ -87,6 +101,9 @@ class SignUpTab extends React.Component {
                 this.setState({
                     redirect: true
                 });
+            } else {
+                this.setState({error: response.errors.error});
+                this.enableDialog('error');
             }
         }).catch((err) => {
             console.log(err);
@@ -114,6 +131,9 @@ class SignUpTab extends React.Component {
                 </form>
                 {
                     this.state.redirect && <Navigate to='/main/authorized' replace={true} />
+                }
+                {
+                    this.state.authAlert && <AuthDialog content={this.state.error} mode={this.state.authAlertMode} handleClose={this.handleDialogClose} />
                 }
             </Paper>
         );

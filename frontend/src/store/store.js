@@ -28,8 +28,4 @@ store.subscribe(() => {
     saveToLocalStorage(store.getState());
 });
 
-/*setInterval(() => {
-    console.log(store.getState());
-}, 5000);*/
-
 export default store;
