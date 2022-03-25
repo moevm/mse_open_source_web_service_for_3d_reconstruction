@@ -36,6 +36,7 @@ class ViewPanel extends React.Component {
         this.state = {
             photos: [],
             images: [],
+            model: null
         }
     }
 
@@ -55,7 +56,8 @@ class ViewPanel extends React.Component {
                 let curImages = this.state.images;
                 curImages.push({
                     src: reader.result,
-                    name: file.name
+                    name: file.name,
+                    file: file
                 });
                 this.setState({
                     images: curImages
@@ -80,6 +82,28 @@ class ViewPanel extends React.Component {
         //    .catch((error) => {
         //        console.log(error);
         //    });
+    }
+
+    handleStart = () => {
+        //убрать ретурн для того, чтоб по нажатию кнопки старт мы смогли кинуть запрос
+        return;
+        const data = new FormData();
+        for (let image of this.state.images){
+            data.append('image', image.file, image.name);
+        }
+
+        let requestUrl = 'http://localhost:8000/upload';
+        const config = {
+            headers: { 'content-type': 'multipart/form-data' }
+        }
+
+        axios.post(requestUrl, data, config)
+            .then((response) => {
+                this.setState({ model: response.data });
+            })
+            .catch((error) => {
+                console.log(error);
+            });
     }
 
     render(){
@@ -124,7 +148,7 @@ class ViewPanel extends React.Component {
                         Upload
                     </Button>
                 </label>
-                <Button style={{marginLeft: '1em'}}> Start </Button>
+                <Button style={{marginLeft: '1em'}} onClick={this.handleStart} > Start </Button>
             </Container>
             </>
         );
