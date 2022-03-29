@@ -34,13 +34,14 @@ class ViewPanel extends React.Component {
     constructor(props){
         super(props);
         this.state = {
-            photos: [],
+            //photos: [],
             images: [],
             model: null
         }
     }
 
     handleDelete = (name) => {
+        console.log('invoked');
         this.setState({
            images: this.state.images.filter((item) => {
                return item.name !== name;
@@ -54,6 +55,11 @@ class ViewPanel extends React.Component {
             let reader = new FileReader();
             reader.onloadend = () => {
                 let curImages = this.state.images;
+                console.log({
+                    src: reader.result,
+                    name: file.name,
+                    file: file
+                })
                 curImages.push({
                     src: reader.result,
                     name: file.name,
@@ -65,31 +71,16 @@ class ViewPanel extends React.Component {
             }
             reader.readAsDataURL(file);
         }
-
-        /*const data = new FormData();
-        data.append('file', event.target.files[0]);
-        let requestUrl = 'http://localhost:8000/upload';
-        const config = {
-            headers: { 'content-type': 'multipart/form-data' }
-        }
-
-        console.log(event.target.files);*/
-
-        //axios.post(requestUrl, data, config)
-        //    .then((response) => {
-        //        this.setState({ photos: [response.data, ...this.state.photos] });
-        //    })
-        //    .catch((error) => {
-        //        console.log(error);
-        //    });
+        document.getElementById("raised-button-file").value = "";
     }
 
     handleStart = () => {
         //убрать ретурн для того, чтоб по нажатию кнопки старт мы смогли кинуть запрос
-        return;
-        const data = new FormData();
+        //return;
+        console.log(this.state.images);
+        const formData = new FormData();
         for (let image of this.state.images){
-            data.append('image', image.file, image.name);
+            formData.append('images', image.file);
         }
 
         let requestUrl = 'http://localhost:8000/upload';
@@ -97,7 +88,7 @@ class ViewPanel extends React.Component {
             headers: { 'content-type': 'multipart/form-data' }
         }
 
-        axios.post(requestUrl, data, config)
+        axios.post(requestUrl, formData, config)
             .then((response) => {
                 this.setState({ model: response.data });
             })
@@ -110,7 +101,7 @@ class ViewPanel extends React.Component {
         return (
             <>
             <Grid data-testid={'view-panel'} container spacing={2}>
-                <Grid item xl={6} xs={12}>
+                <Grid item xl={6} md={6} xs={12}>
                     <Typography variant={'h4'}> Please, choose your images: </Typography>
                     <input
                         accept="image/*"
@@ -124,7 +115,7 @@ class ViewPanel extends React.Component {
                     <ImagesDisplay delete={this.handleDelete} images={this.state.images}/>
 
                 </Grid>
-                <Grid item xl={6} xs={12}>
+                <Grid item xl={6} md={6} xs={12}>
                     <>
                         <Typography variant={'h4'}> 3D model will be displayed here: </Typography>
                         <Canvas style={{ maxHeight: '65vh'}}>
@@ -166,7 +157,7 @@ class ImagesDisplay extends React.Component {
             for (let image of images){
                 //console.log(image);
                 items.push(
-                    <Grid item xl={3} xs={6} >
+                    <Grid item xl={3} md={4} xs={6} >
                         <Card variant={'outlined'} sx={{
                             marginTop: '1em',
                             marginBottom: '1em',
@@ -185,7 +176,7 @@ class ImagesDisplay extends React.Component {
                                 </CardContent>
                             </CardActionArea>
                             <CardActions >
-                                <IconButton  onClick={() => {this.props.delete(image.name);}}>
+                                <IconButton  onClick={() => {return this.props.delete(image.name);}}>
                                     <DeleteIcon />
                                 </IconButton>
                                 <IconButton >

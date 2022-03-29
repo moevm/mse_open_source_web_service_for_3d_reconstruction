@@ -55,7 +55,6 @@ class SignInTab extends React.Component {
 
     login(){
         if (!this.isInputValid()){
-            //alert('Please, fill all fields! Password must contain at least 8 symbols.')
             this.enableDialog('signin');
             return;
         }
