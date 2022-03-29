@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Example of Meshroom launching
+# python3 launch.py /app/Meshroom /app/pipeline_graph_template.mg /app/media/datasets/<unique_dataset_name>
 if [ "$DATABASE" = "postgres" ]
 then
     echo "Waiting for postgres..."

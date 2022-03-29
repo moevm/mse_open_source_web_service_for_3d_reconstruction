@@ -6,6 +6,8 @@ from rest_framework import status
 from .serializers import DatasetSerializer, ImageSerializer
 from .models import Dataset
 from django.utils import timezone, text
+from django.conf import settings
+import os
 
 
 class UploadView(APIView):
@@ -41,5 +43,12 @@ class UploadView(APIView):
             image_serializer = ImageSerializer(data=wrapped_image)
             image_serializer.is_valid(raise_exception=True)
             image_serializer.save()
+
+        # Launch Meshroom
+        img_path = settings.MEDIA_ROOT + '/' + dataset_instance.dataset_path
+        meshroom_result_code = os.system('python3 launch.py \
+                   ./Meshroom \
+                   ./pipeline_graph_template.mg \
+                   {}'.format(img_path))
 
         return Response(dataset_serializer.data, status=status.HTTP_201_CREATED)

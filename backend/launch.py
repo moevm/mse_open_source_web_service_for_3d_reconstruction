@@ -1,32 +1,35 @@
 import sys
-import os, os.path
+import os
 import time
 from pathlib import Path
 
 # Absolute path of this file
 dirname = os.path.dirname(os.path.abspath(__file__))
 
-def createDir(path):
+
+def create_dir(path):
     try:
         os.mkdir(path)
     except:
         pass
 
+
 def run(bin_path, mg_path, img_path, additional_parameters):
     sensor_database = bin_path + "/aliceVision/share/aliceVision/cameraSensors.db"
     tree = bin_path + "/aliceVision/share/aliceVision/vlfeat_K80L3.SIFT.tree"
 
-    createDir("{}/result".format(dirname))
+    create_dir("{}/result".format(img_path))
     cmd = "{}/meshroom_batch ".format(bin_path) + \
-        "--input {} ".format(img_path)  + \
-        "--cache {}/cache ".format(dirname) + \
+        "--input {} ".format(img_path) + \
+        "--cache {}/cache ".format(img_path) + \
         "--pipeline {} ".format(mg_path) + \
         "--paramOverrides CameraInit.sensorDatabase={} ImageMatching.tree={} ".format(sensor_database, tree) + \
-        "--output {}/result/{} ".format(dirname, Path(img_path).name) + \
+        "--output {}/result ".format(img_path) + \
         " ".join(additional_parameters)
     
     print(cmd)
     os.system(cmd)
+
 
 def main():
     # Path of the Meshroom's binary files
@@ -45,6 +48,7 @@ def main():
     end_time = time.time()
     hours, rem = divmod(end_time-start_time, 3600)
     minutes, seconds = divmod(rem, 60)
-    print("time elapsed: "+"{:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
+    print("time elapsed: "+"{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
+
 
 main()
