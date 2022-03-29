@@ -21,8 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = 'django-insecure-bc_65acl#u&@fy62x)y6!pfgxr=f$snc_!&tk!)j#@54+x$-)3'
-SECRET_KEY = os.environ.get("SECRET_KEY", 'django-insecure-bc_65acl#u&@fy62x)y6!pfgxr=f$snc_!&tk!)j#@54+x$-)3')
+
+SECRET_KEY = 'foo'
+# SECRET_KEY = os.environ.get("SECRET_KEY", 'django-insecure-bc_65acl#u&@fy62x)y6!pfgxr=f$snc_!&tk!)j#@54+x$-)3')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", default=True)
@@ -45,7 +47,8 @@ INSTALLED_APPS = [
     'authentication.apps.AuthenticationConfig',
     'rest_framework',
     'corsheaders',
-    'django_extensions'
+    'django_extensions',
+    'upload.apps.UploadConfig'
 ]
 
 MIDDLEWARE = [
@@ -130,6 +133,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Absolute filesystem path to the directory that will hold user-uploaded files.
+MEDIA_ROOT = BASE_DIR / 'media'
+# URL that handles the media served from MEDIA_ROOT, used for managing stored files.
+MEDIA_URL = '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

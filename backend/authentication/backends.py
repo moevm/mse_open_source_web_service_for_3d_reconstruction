@@ -8,7 +8,7 @@ from .models import User
 
 
 class JWTAuthentication(authentication.BaseAuthentication):
-    authentication_header_prefix = 'Token'
+    authentication_header_prefix = 'Bearer'
 
     def authenticate(self, request):
         """
@@ -65,6 +65,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         Попытка аутентификации с предоставленными данными. Если успешно -
         вернуть пользователя и токен, иначе - сгенерировать исключение.
         """
+
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
         except Exception:
