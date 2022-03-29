@@ -1,5 +1,17 @@
 import React from 'react'
-import {Box, Button, Container, Grid, Typography} from "@mui/material";
+import {
+    Box,
+    Button,
+    Card,
+    CardActionArea, CardActions,
+    CardContent,
+    CardMedia,
+    Container,
+    Grid, IconButton,
+    Paper,
+    Typography
+} from "@mui/material";
+import "../styles/ViewPanel.css"
 import { Canvas } from "@react-three/fiber";
 import { useLoader } from "@react-three/fiber";
 import { Environment, OrbitControls } from "@react-three/drei";
@@ -7,6 +19,8 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { Suspense } from "react";
 import * as THREE from "three";
 import { DDSLoader } from "three-stdlib";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import axios from "axios";
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
@@ -21,23 +35,37 @@ class ViewPanel extends React.Component {
         super(props);
         this.state = {
             photos: [],
-            file: '',
-            imagePreviewUrl: ''
+            images: [],
+            model: null
         }
     }
 
-    handleUpload = (event) => {
-        let reader = new FileReader();
-        let file = event.target.files[0];
+    handleDelete = (name) => {
+        this.setState({
+           images: this.state.images.filter((item) => {
+               return item.name !== name;
+           })
+        });
+    }
 
-        reader.onloadend = () => {
-            this.setState({
-                file: file,
-                imagePreviewUrl: reader.result
-            });
+    handleUpload = (event) => {
+        let files = event.target.files;
+        for (let file of files){
+            let reader = new FileReader();
+            reader.onloadend = () => {
+                let curImages = this.state.images;
+                curImages.push({
+                    src: reader.result,
+                    name: file.name,
+                    file: file
+                });
+                this.setState({
+                    images: curImages
+                });
+            }
+            reader.readAsDataURL(file);
         }
 
-        reader.readAsDataURL(file)
         /*const data = new FormData();
         data.append('file', event.target.files[0]);
         let requestUrl = 'http://localhost:8000/upload';
@@ -56,24 +84,26 @@ class ViewPanel extends React.Component {
         //    });
     }
 
-    /*
-    <Grid data-testid={'view-panel'} container spacing={2}>
-                {this.state.photos.map(photo => (
-                    <Grid item xl={4} xs={12}>
-                        <img src={`http://localhost:3000/${photo.filename}`} alt={'user photo'} />
-                    </Grid>
-                ))}
-    </Grid>
-    */
-    displayImage(){
-        if (this.state.imagePreviewUrl){
-            return (
-                <Grid item xl={6} xs={12}>
-                        <img style={{width: '100px', height: 'auto', marginTop: '1em', marginLeft: "1em"}} src={this.state.imagePreviewUrl} alt={'user photo'} />
-                </Grid>
-            )
+    handleStart = () => {
+        //убрать ретурн для того, чтоб по нажатию кнопки старт мы смогли кинуть запрос
+        return;
+        const data = new FormData();
+        for (let image of this.state.images){
+            data.append('image', image.file, image.name);
         }
-        return null;
+
+        let requestUrl = 'http://localhost:8000/upload';
+        const config = {
+            headers: { 'content-type': 'multipart/form-data' }
+        }
+
+        axios.post(requestUrl, data, config)
+            .then((response) => {
+                this.setState({ model: response.data });
+            })
+            .catch((error) => {
+                console.log(error);
+            });
     }
 
     render(){
@@ -82,16 +112,6 @@ class ViewPanel extends React.Component {
             <Grid data-testid={'view-panel'} container spacing={2}>
                 <Grid item xl={6} xs={12}>
                     <Typography variant={'h4'}> Please, choose your images: </Typography>
-                    <Box
-                        sx={{
-                            width: '100%',
-                            height: 300,
-                            border: '1px solid grey'
-                        }}
-                    >
-                        {this.displayImage()}
-                    </Box>
-
                     <input
                         accept="image/*"
                         style={{ display: 'none' }}
@@ -101,11 +121,13 @@ class ViewPanel extends React.Component {
                         onChange={this.handleUpload}
                     />
 
+                    <ImagesDisplay delete={this.handleDelete} images={this.state.images}/>
+
                 </Grid>
                 <Grid item xl={6} xs={12}>
                     <>
                         <Typography variant={'h4'}> 3D model will be displayed here: </Typography>
-                        <Canvas style={{ maxHeight: 300}}>
+                        <Canvas style={{ maxHeight: '65vh'}}>
                             <Suspense fallback={null}>
                                 <Scene />
                                 <OrbitControls />
@@ -126,9 +148,80 @@ class ViewPanel extends React.Component {
                         Upload
                     </Button>
                 </label>
-                <Button style={{marginLeft: '1em'}}> Start </Button>
+                <Button style={{marginLeft: '1em'}} onClick={this.handleStart} > Start </Button>
             </Container>
             </>
+        );
+    }
+}
+
+class ImagesDisplay extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    displayImages(images){
+        if (images.length > 0){
+            let items = [];
+            for (let image of images){
+                //console.log(image);
+                items.push(
+                    <Grid item xl={3} xs={6} >
+                        <Card variant={'outlined'} sx={{
+                            marginTop: '1em',
+                            marginBottom: '1em',
+                            marginLeft: '1em',
+                            //display: 'inline-block'
+                        }}>
+                            <CardActionArea>
+                                <CardMedia
+                                    component="img"
+                                    image={image.src}
+                                    width={'100%'}
+                                    alt={'user photo'}
+                                />
+                                <CardContent>
+                                    <Typography color="text.secondary"> {image.name} </Typography>
+                                </CardContent>
+                            </CardActionArea>
+                            <CardActions >
+                                <IconButton  onClick={() => {this.props.delete(image.name);}}>
+                                    <DeleteIcon />
+                                </IconButton>
+                                <IconButton >
+                                    <EditIcon/>
+                                </IconButton>
+
+                            </CardActions>
+                        </Card>
+                    </Grid>
+
+                );
+            }
+            return (
+                <Grid container align-items={'stretch'}>
+                    {items}
+                </Grid>
+            );
+        }
+        return null;
+    }
+
+    render(){
+        return (
+            <Paper elevation={6}>
+            <Box id={'images-panel'}
+                sx={{
+                    width: '100%',
+                    height: '65vh',
+                    overflow: 'auto'
+                }}
+            >
+
+                    {this.displayImages(this.props.images)}
+
+            </Box>
+            </Paper>
         );
     }
 }

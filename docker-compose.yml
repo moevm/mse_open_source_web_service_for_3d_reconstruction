@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.5"
 
 services:
   db:
@@ -27,8 +27,8 @@ services:
     restart: unless-stopped
     build: ./frontend
     network_mode: host
-    depends_on:
-      - backend
+#    depends_on:
+#      - backend
 
 volumes:
   postgres_data:
