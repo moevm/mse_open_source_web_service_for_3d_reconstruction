@@ -7,6 +7,7 @@ from .serializers import DatasetSerializer, ImageSerializer
 from .models import Dataset
 from django.utils import timezone, text
 from django.conf import settings
+from django.http import FileResponse
 import os
 
 
@@ -49,6 +50,10 @@ class UploadView(APIView):
         meshroom_result_code = os.system('python3 launch.py \
                    ./Meshroom \
                    ./pipeline_graph_template.mg \
-                   {}'.format(img_path))
+                   {} --forceStatus'.format(img_path))
 
-        return Response(dataset_serializer.data, status=status.HTTP_201_CREATED)
+        if meshroom_result_code == 0:
+            result_obj_path = img_path / 'result/texturedMesh.obj'
+            return FileResponse(open(result_obj_path, 'rb'))
+        else:
+            return Response('Meshroom internal error', status=status.HTTP_201_CREATED)
