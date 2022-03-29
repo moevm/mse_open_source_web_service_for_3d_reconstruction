@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import DatasetSerializer, ImageSerializer
 from .models import Dataset
+from django.utils import timezone, text
 
 
 class UploadView(APIView):
@@ -20,11 +21,13 @@ class UploadView(APIView):
         # Convert QueryDict to Python's dict
         images = dict(request.data.lists())['images']
 
+        timestamp = timezone.now()
         dataset_serializer = DatasetSerializer(
             data={
                 'user': request.user.id,
-                'dataset_path': 'images/user_{}'.format(request.user.id),
-                'images_count': len(images)
+                'dataset_path': 'datasets/user_{}_{}'.format(request.user.id, text.slugify(timestamp)),
+                'images_count': len(images),
+                'created_at': timestamp
             }
         )
         dataset_serializer.is_valid(raise_exception=True)

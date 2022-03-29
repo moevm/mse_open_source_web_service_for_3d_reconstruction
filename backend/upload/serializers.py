@@ -5,7 +5,7 @@ from .models import Dataset, Image
 class DatasetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dataset
-        fields = ('user', 'dataset_path', 'images_count')
+        fields = '__all__'
 
 
 class ImageSerializer(serializers.ModelSerializer):
