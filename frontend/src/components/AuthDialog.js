@@ -13,7 +13,7 @@ class AuthDialog extends React.Component {
     renderContent(mode){
         if (mode === 'signin' || mode === 'signup'){
             return (
-                <DialogContent>
+                <DialogContent data-testid={"auth-dialog-content"}>
                     <DialogContentText id="alert-dialog-description">
                         Check if you are following all of these:
                         <ol>
@@ -26,7 +26,7 @@ class AuthDialog extends React.Component {
             );
         } else if (mode === 'password'){
             return (
-                <DialogContent>
+                <DialogContent data-testid={"auth-dialog-content"}>
                     <DialogContentText id="alert-dialog-description">
                         Password and confirmed password do not match. Please, try again.
                     </DialogContentText>
@@ -34,7 +34,7 @@ class AuthDialog extends React.Component {
             );
         } else {
             return (
-                <DialogContent>
+                <DialogContent data-testid={"auth-dialog-content"}>
                     <DialogContentText id="alert-dialog-description">
                         {this.props.content ?? "Your user's data is invalid. Please, try again" }
                     </DialogContentText>
@@ -52,12 +52,12 @@ class AuthDialog extends React.Component {
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
             >
-                <DialogTitle id="alert-dialog-title">
+                <DialogTitle id="alert-dialog-title" data-testid={"auth-dialog-title"}>
                     {"Please, check your input"}
                 </DialogTitle>
                 {this.renderContent(this.props.mode)}
                 <DialogActions>
-                    <Button onClick={this.props.handleClose}>Ok</Button>
+                    <Button data-testid={"auth-dialog-ok"} onClick={this.props.handleClose}>Ok</Button>
                 </DialogActions>
             </Dialog>
         );

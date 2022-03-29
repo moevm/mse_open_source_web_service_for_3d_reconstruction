@@ -9,7 +9,6 @@ class BoilerplateTab extends React.Component {
         return (
             <Container data-testid={'boilerplate-tab'} sx={{ marginTop: 4}}>
                 <ViewPanel/>
-
             </Container>
         );
     }
