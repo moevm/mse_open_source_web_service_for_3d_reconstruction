@@ -22,6 +22,7 @@ import { DDSLoader } from "three-stdlib";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import axios from "axios";
+import store from "../store/store";
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
@@ -41,7 +42,7 @@ class ViewPanel extends React.Component {
     }
 
     handleDelete = (name) => {
-        console.log('invoked');
+        //console.log('invoked');
         this.setState({
            images: this.state.images.filter((item) => {
                return item.name !== name;
@@ -77,15 +78,19 @@ class ViewPanel extends React.Component {
     handleStart = () => {
         //убрать ретурн для того, чтоб по нажатию кнопки старт мы смогли кинуть запрос
         //return;
-        console.log(this.state.images);
+        //console.log(this.state.images);
         const formData = new FormData();
         for (let image of this.state.images){
             formData.append('images', image.file);
         }
 
         let requestUrl = 'http://localhost:8000/upload';
+        console.log(store.getState().token);
         const config = {
-            headers: { 'content-type': 'multipart/form-data' }
+            headers: {
+                'content-type': 'multipart/form-data',
+                'authorization': 'Bearer ' + store.getState().token
+            }
         }
 
         axios.post(requestUrl, formData, config)
