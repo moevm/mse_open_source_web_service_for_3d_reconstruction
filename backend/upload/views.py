@@ -45,7 +45,7 @@ class UploadView(APIView):
             image_serializer.save()
 
         # Launch Meshroom
-        img_path = settings.MEDIA_ROOT + '/' + dataset_instance.dataset_path
+        img_path = settings.MEDIA_ROOT / dataset_instance.dataset_path
         meshroom_result_code = os.system('python3 launch.py \
                    ./Meshroom \
                    ./pipeline_graph_template.mg \
