@@ -7,8 +7,11 @@ from .serializers import DatasetSerializer, ImageSerializer
 from .models import Dataset
 from django.utils import timezone, text
 from django.conf import settings
-from django.http import FileResponse
+from django.http import HttpResponse, FileResponse
 import os
+import zipfile
+from io import BytesIO
+from pathlib import Path
 
 
 class UploadView(APIView):
@@ -54,9 +57,27 @@ class UploadView(APIView):
 
         if meshroom_result_code == 0:
             try:
-                result_obj_path = img_path / 'result/texturedMesh.obj'
-                return FileResponse(open(result_obj_path, 'rb'))
+                # TODO: Maybe there are several .png files. You should consider this case.
+                filenames = ['texturedMesh.obj', 'texture_1001.png']
+
+                # Folder name in ZIP archive which contains the above files
+                # E.g [thearchive.zip]/dirname/abracadabra.txt
+                zip_subdir = "/"
+
+                bytes_stream = BytesIO()
+                with zipfile.ZipFile(bytes_stream, 'w') as zip_file:
+                    for filename in filenames:
+                        filepath = Path.joinpath(img_path, 'result', filename)
+                        zip_filepath = os.path.join(zip_subdir, filename)
+                        zip_file.write(filepath, zip_filepath)
+
+                response = HttpResponse(bytes_stream.getvalue(),
+                                        content_type='application/zip',
+                                        status=status.HTTP_200_OK)
+
+                return response
+
             except FileNotFoundError:
-                return Response('Result file was not found', status=status.HTTP_200_OK)
+                return Response('Result file was not found', status=status.HTTP_418_IM_A_TEAPOT)
         else:
-            return Response('Meshroom internal error', status=status.HTTP_200_OK)
+            return Response('Meshroom internal error', status=status.HTTP_418_IM_A_TEAPOT)
