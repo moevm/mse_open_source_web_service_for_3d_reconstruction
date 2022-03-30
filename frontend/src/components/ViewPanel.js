@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useMemo} from 'react'
 import {
     Box,
     Button,
@@ -23,12 +23,39 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import axios from "axios";
 import store from "../store/store";
+import mesh from "../texturedMesh.obj"
+import map from "../texture_1001.png"
+import {TextureLoader} from "three";
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
-const Scene = () => {
-    const obj = useLoader(OBJLoader, '/Poimandres.obj')
-    return <primitive object={obj} scale={0.4}/>
+const Scene = (props) => {
+    console.log(mesh);
+    const obj = useLoader(OBJLoader, props.model);
+    const texture = useLoader(TextureLoader, map);
+    const geometry = useMemo(() => {
+        let g;
+        obj.traverse((c) => {
+            if (c.type === "Mesh") {
+                g = c.geometry;
+            }
+        });
+        return g;
+    }, [obj]);
+
+    // I've used meshPhysicalMaterial because the texture needs lights to be seen properly.
+    return (
+        <mesh geometry={geometry} scale={1}>
+            <meshPhysicalMaterial map={texture} />
+        </mesh>
+    );
+    /*console.log(colorMap);
+
+    return (
+        <mesh>
+            <primitive object={obj} scale={0.4}/>
+            <meshStandardMaterial map={colorMap} />
+        </mesh> );*/
 };
 
 class ViewPanel extends React.Component {
@@ -37,7 +64,7 @@ class ViewPanel extends React.Component {
         this.state = {
             //photos: [],
             images: [],
-            model: null
+            model: mesh
         }
     }
 
@@ -76,15 +103,31 @@ class ViewPanel extends React.Component {
     }
 
     handleStart = () => {
-        //убрать ретурн для того, чтоб по нажатию кнопки старт мы смогли кинуть запрос
-        //return;
-        //console.log(this.state.images);
+        /*const b64toBlob = (b64Data, contentType='', sliceSize=512) => {
+            const byteCharacters = atob(b64Data);
+            const byteArrays = [];
+
+            for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+
+                const byteArray = new Uint16Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+
+            return new Blob(byteArrays, {type: contentType});
+        }*/
+
         const formData = new FormData();
         for (let image of this.state.images){
             formData.append('images', image.file);
         }
 
-        let requestUrl = 'http://localhost:8000/upload';
+        let requestUrl = 'http://localhost:8000/upload/';
         console.log(store.getState().token);
         const config = {
             headers: {
@@ -95,7 +138,11 @@ class ViewPanel extends React.Component {
 
         axios.post(requestUrl, formData, config)
             .then((response) => {
-                this.setState({ model: response.data });
+                console.log(response.data);
+                console.log(typeof response.data);
+                let uri = URL.createObjectURL(new Blob([response.data] , {type:'text/plain'}))
+                this.setState({ model:  uri});
+                console.log(uri);
             })
             .catch((error) => {
                 console.log(error);
@@ -125,7 +172,7 @@ class ViewPanel extends React.Component {
                         <Typography variant={'h4'}> 3D model will be displayed here: </Typography>
                         <Canvas style={{ maxHeight: '65vh'}}>
                             <Suspense fallback={null}>
-                                <Scene />
+                                <Scene model={this.state.model} />
                                 <OrbitControls />
                                 <Environment preset="sunset" background />
                             </Suspense>
