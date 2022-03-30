@@ -53,7 +53,10 @@ class UploadView(APIView):
                    {} --forceStatus'.format(img_path))
 
         if meshroom_result_code == 0:
-            result_obj_path = img_path / 'result/texturedMesh.obj'
-            return FileResponse(open(result_obj_path, 'rb'))
+            try:
+                result_obj_path = img_path / 'result/texturedMesh.obj'
+                return FileResponse(open(result_obj_path, 'rb'))
+            except FileNotFoundError:
+                return Response('Result file was not found', status=status.HTTP_200_OK)
         else:
-            return Response('Meshroom internal error', status=status.HTTP_201_CREATED)
+            return Response('Meshroom internal error', status=status.HTTP_200_OK)
