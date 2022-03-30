@@ -50,7 +50,7 @@ class UploadView(APIView):
         meshroom_result_code = os.system('python3 launch.py \
                    ./Meshroom \
                    ./pipeline_graph_template.mg \
-                   {} --forceStatus'.format(img_path))
+                   {}'.format(img_path))
 
         if meshroom_result_code == 0:
             try:
