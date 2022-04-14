@@ -26,13 +26,13 @@ import store from "../store/store";
 import mesh from "../texturedMesh.obj"
 import map from "../texture_1001.png"
 import {TextureLoader} from "three";
+import MeshroomProgress from "./MeshroomProgress";
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
 const Scene = (props) => {
-    console.log(mesh);
     const obj = useLoader(OBJLoader, props.model);
-    const texture = useLoader(TextureLoader, map);
+    const texture = useLoader(TextureLoader, props.texture);
     const geometry = useMemo(() => {
         let g;
         obj.traverse((c) => {
@@ -43,7 +43,6 @@ const Scene = (props) => {
         return g;
     }, [obj]);
 
-    // I've used meshPhysicalMaterial because the texture needs lights to be seen properly.
     return (
         <mesh geometry={geometry} scale={1}>
             <meshPhysicalMaterial map={texture} />
@@ -62,14 +61,44 @@ class ViewPanel extends React.Component {
     constructor(props){
         super(props);
         this.state = {
-            //photos: [],
             images: [],
-            model: mesh
+            model: mesh,
+            texture: map,
+            isMeshroomStarted: false,
+            progressMessage: "Photos sent to server",
+            progressValue: 10
+        }
+        this.progressHandler = null;
+    }
+
+    handleProgress = (interval) => {
+        this.setState({isMeshroomStarted: true});
+        this.progressHandler = setInterval(() => {
+            let requestUrl = 'http://localhost:8000/state/';
+            axios.get(requestUrl)
+                .then((response) => {
+                   this.setState({
+                       progressMessage: response.message,
+                       progressValue: +response.value
+                   });
+                }).catch((err) => {
+                   console.log(err);
+                });
+        }, interval);
+    }
+
+    cancelProgress = () => {
+        this.setState({isMeshroomStarted: false});
+        clearInterval(this.progressHandler);
+    }
+
+    componentWillUnmount() {
+        if (this.progressHandler){
+            clearInterval(this.progressHandler);
         }
     }
 
     handleDelete = (name) => {
-        //console.log('invoked');
         this.setState({
            images: this.state.images.filter((item) => {
                return item.name !== name;
@@ -83,11 +112,6 @@ class ViewPanel extends React.Component {
             let reader = new FileReader();
             reader.onloadend = () => {
                 let curImages = this.state.images;
-                console.log({
-                    src: reader.result,
-                    name: file.name,
-                    file: file
-                })
                 curImages.push({
                     src: reader.result,
                     name: file.name,
@@ -102,33 +126,18 @@ class ViewPanel extends React.Component {
         document.getElementById("raised-button-file").value = "";
     }
 
-    handleStart = () => {
-        /*const b64toBlob = (b64Data, contentType='', sliceSize=512) => {
-            const byteCharacters = atob(b64Data);
-            const byteArrays = [];
-
-            for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-                const slice = byteCharacters.slice(offset, offset + sliceSize);
-
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-
-                const byteArray = new Uint16Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-
-            return new Blob(byteArrays, {type: contentType});
-        }*/
-
+    loadImages = () => {
         const formData = new FormData();
         for (let image of this.state.images){
             formData.append('images', image.file);
         }
+        return formData;
+    }
+
+    handleStart = () => {
+        //this.handleProgress(1000);
 
         let requestUrl = 'http://localhost:8000/upload/';
-        console.log(store.getState().token);
         const config = {
             headers: {
                 'content-type': 'multipart/form-data',
@@ -136,15 +145,14 @@ class ViewPanel extends React.Component {
             }
         }
 
-        axios.post(requestUrl, formData, config)
+        axios.post(requestUrl, this.loadImages(), config)
             .then((response) => {
-                console.log(response.data);
-                console.log(typeof response.data);
                 let uri = URL.createObjectURL(new Blob([response.data] , {type:'text/plain'}))
                 this.setState({ model:  uri});
-                console.log(uri);
+                this.cancelProgress();
             })
             .catch((error) => {
+                this.cancelProgress();
                 console.log(error);
             });
     }
@@ -172,7 +180,7 @@ class ViewPanel extends React.Component {
                         <Typography variant={'h4'}> 3D model will be displayed here: </Typography>
                         <Canvas style={{ maxHeight: '65vh'}}>
                             <Suspense fallback={null}>
-                                <Scene model={this.state.model} />
+                                <Scene model={this.state.model} texture={this.state.texture}/>
                                 <OrbitControls />
                                 <Environment preset="sunset" background />
                             </Suspense>
@@ -192,6 +200,9 @@ class ViewPanel extends React.Component {
                     </Button>
                 </label>
                 <Button style={{marginLeft: '1em'}} onClick={this.handleStart} > Start </Button>
+                { this.state.isMeshroomStarted && <MeshroomProgress
+                    message={this.state.progressMessage}
+                    value={this.state.progressValue}/> }
             </Container>
             </>
         );
@@ -207,14 +218,12 @@ class ImagesDisplay extends React.Component {
         if (images.length > 0){
             let items = [];
             for (let image of images){
-                //console.log(image);
                 items.push(
                     <Grid item xl={3} md={4} xs={6} >
                         <Card variant={'outlined'} sx={{
                             marginTop: '1em',
                             marginBottom: '1em',
                             marginLeft: '1em',
-                            //display: 'inline-block'
                         }}>
                             <CardActionArea>
                                 <CardMedia
