@@ -5,6 +5,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import DatasetSerializer, ImageSerializer
 from .models import Dataset
+from django.utils import timezone, text
+from django.conf import settings
+from django.http import HttpResponse, FileResponse
+import os
+import zipfile
+from io import BytesIO
+from pathlib import Path
 
 
 class UploadView(APIView):
@@ -20,11 +27,13 @@ class UploadView(APIView):
         # Convert QueryDict to Python's dict
         images = dict(request.data.lists())['images']
 
+        timestamp = timezone.now()
         dataset_serializer = DatasetSerializer(
             data={
                 'user': request.user.id,
-                'dataset_path': 'images/user_{}'.format(request.user.id),
-                'images_count': len(images)
+                'dataset_path': 'datasets/user_{}_{}'.format(request.user.id, text.slugify(timestamp)),
+                'images_count': len(images),
+                'created_at': timestamp
             }
         )
         dataset_serializer.is_valid(raise_exception=True)
@@ -39,4 +48,36 @@ class UploadView(APIView):
             image_serializer.is_valid(raise_exception=True)
             image_serializer.save()
 
-        return Response(dataset_serializer.data, status=status.HTTP_201_CREATED)
+        # Launch Meshroom
+        img_path = settings.MEDIA_ROOT / dataset_instance.dataset_path
+        meshroom_result_code = os.system('python3 launch.py \
+                   ./Meshroom \
+                   ./pipeline_graph_template.mg \
+                   {}'.format(img_path))
+
+        if meshroom_result_code == 0:
+            try:
+                # TODO: Maybe there are several .png files. You should consider this case.
+                filenames = ['texturedMesh.obj', 'texture_1001.png']
+
+                # Folder name in ZIP archive which contains the above files
+                # E.g [thearchive.zip]/dirname/abracadabra.txt
+                zip_subdir = "/"
+
+                bytes_stream = BytesIO()
+                with zipfile.ZipFile(bytes_stream, 'w') as zip_file:
+                    for filename in filenames:
+                        filepath = Path.joinpath(img_path, 'result', filename)
+                        zip_filepath = os.path.join(zip_subdir, filename)
+                        zip_file.write(filepath, zip_filepath)
+
+                response = HttpResponse(bytes_stream.getvalue(),
+                                        content_type='application/zip',
+                                        status=status.HTTP_200_OK)
+
+                return response
+
+            except FileNotFoundError:
+                return Response('Result file was not found', status=status.HTTP_418_IM_A_TEAPOT)
+        else:
+            return Response('Meshroom internal error', status=status.HTTP_418_IM_A_TEAPOT)

@@ -9,6 +9,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Don't bufferize an output
 ENV PYTHONUNBUFFERED=1
 
+# Download Meshroom, make in comments if you have it in local
+# RUN wget https://github.com/alicevision/meshroom/releases/download/v2021.1.0/Meshroom-2021.1.0-linux-cuda10.tar.gz
+# RUN tar --totals -xf Meshroom-2021.1.0-linux-cuda10.tar.gz
+# RUN rm Meshroom-2021.1.0-linux-cuda10.tar.gz
+# RUN mv Meshroom-2021.1.0-av2.4.0-centos7-cuda10.2 Meshroom
+
 # Install dependencies
 RUN pip install --upgrade pip
 COPY requirements.txt .

@@ -10,7 +10,7 @@ def user_directory_path(instance, filename):
 class Dataset(models.Model):
     user = models.ForeignKey(to=User, null=False, on_delete=models.CASCADE)
     dataset_path = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField()
     images_count = models.IntegerField(default=0)
 
     def __str__(self):
