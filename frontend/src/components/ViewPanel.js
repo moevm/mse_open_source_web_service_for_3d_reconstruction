@@ -18,13 +18,14 @@ import { Environment, OrbitControls } from "@react-three/drei";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { Suspense } from "react";
 import * as THREE from "three";
-import { DDSLoader } from "three-stdlib";
+import {DDSLoader, MTLLoader} from "three-stdlib";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import axios from "axios";
 import store from "../store/store";
 import mesh from "../texturedMesh.obj"
-import map from "../texture_1001.png"
+import map from "../texturedMesh.mtl"
+import colorMap from "../texture_1001.png"
 import {TextureLoader} from "three";
 import MeshroomProgress from "./MeshroomProgress";
 
@@ -32,7 +33,8 @@ THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
 const Scene = (props) => {
     const obj = useLoader(OBJLoader, props.model);
-    const texture = useLoader(TextureLoader, props.texture);
+    const texture = useLoader(TextureLoader, colorMap);
+    console.log(props.model);
     const geometry = useMemo(() => {
         let g;
         obj.traverse((c) => {
@@ -48,13 +50,6 @@ const Scene = (props) => {
             <meshPhysicalMaterial map={texture} />
         </mesh>
     );
-    /*console.log(colorMap);
-
-    return (
-        <mesh>
-            <primitive object={obj} scale={0.4}/>
-            <meshStandardMaterial map={colorMap} />
-        </mesh> );*/
 };
 
 class ViewPanel extends React.Component {
@@ -63,7 +58,7 @@ class ViewPanel extends React.Component {
         this.state = {
             images: [],
             model: mesh,
-            texture: map,
+            texture: colorMap,
             isMeshroomStarted: false,
             progressMessage: "Photos sent to server",
             progressValue: 10
@@ -135,7 +130,8 @@ class ViewPanel extends React.Component {
     }
 
     handleStart = () => {
-        //this.handleProgress(1000);
+        //const progressHandlerInterval = 1000;
+        //this.handleProgress(progressHandlerInterval);
 
         let requestUrl = 'http://localhost:8000/upload/';
         const config = {
@@ -147,8 +143,18 @@ class ViewPanel extends React.Component {
 
         axios.post(requestUrl, this.loadImages(), config)
             .then((response) => {
-                let uri = URL.createObjectURL(new Blob([response.data] , {type:'text/plain'}))
-                this.setState({ model:  uri});
+                console.log(response.data['png']);
+
+                let obj = new Blob([response.data['obj']] , {type: 'text/plain'});
+                let png = new Blob([response.data['png']] , {type: 'image/png'});
+
+                let objUri = URL.createObjectURL(obj);
+                let pngUri = URL.createObjectURL(png);
+
+                this.setState({
+                    model:  objUri,
+                    texture: pngUri
+                });
                 this.cancelProgress();
             })
             .catch((error) => {
