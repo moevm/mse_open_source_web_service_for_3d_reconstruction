@@ -14,7 +14,7 @@ import {
 import "../styles/ViewPanel.css"
 import { Canvas } from "@react-three/fiber";
 import { useLoader } from "@react-three/fiber";
-import { Environment, OrbitControls } from "@react-three/drei";
+import {Environment, OrbitControls, useTexture} from "@react-three/drei";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { Suspense } from "react";
 import * as THREE from "three";
@@ -28,12 +28,13 @@ import map from "../texturedMesh.mtl"
 import colorMap from "../texture_1001.png"
 import {TextureLoader} from "three";
 import MeshroomProgress from "./MeshroomProgress";
+import CropWindow from "./CropWindow";
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
 const Scene = (props) => {
     const obj = useLoader(OBJLoader, props.model);
-    const texture = useLoader(TextureLoader, colorMap);
+    const texture = useTexture(props.texture);//useLoader(TextureLoader, props.texture);
     console.log(props.model);
     const geometry = useMemo(() => {
         let g;
@@ -61,7 +62,9 @@ class ViewPanel extends React.Component {
             texture: colorMap,
             isMeshroomStarted: false,
             progressMessage: "Photos sent to server",
-            progressValue: 10
+            progressValue: 10,
+            isCropOpen: false,
+            currentImage: null
         }
         this.progressHandler = null;
     }
@@ -101,12 +104,53 @@ class ViewPanel extends React.Component {
         });
     }
 
+    handleCrop = (name) => {
+        let images = this.state.images.filter((item) => {
+            return item.name === name;
+        });
+
+        console.log(images);
+
+        if (images.length === 0){
+            return;
+        }
+
+        this.setState({
+            isCropOpen: true,
+            currentImage: images[0]
+        });
+
+    }
+
+    handleCropClose = (newImage) => {
+        this.setState({
+            isCropOpen: false
+        });
+
+        if (!newImage){
+            return;
+        }
+
+        this.state.currentImage.src = newImage;
+        this.state.currentImage.file = new File([newImage], this.state.currentImage.name);
+        let curImages = this.state.images;
+        this.setState({
+            images: curImages.map((item) => {
+                if (item.name !== this.state.currentImage.name){
+                    return item;
+                }
+                return this.state.currentImage;
+            })
+        })
+    }
+
     handleUpload = (event) => {
         let files = event.target.files;
         for (let file of files){
             let reader = new FileReader();
             reader.onloadend = () => {
                 let curImages = this.state.images;
+                console.log(curImages);
                 curImages.push({
                     src: reader.result,
                     name: file.name,
@@ -122,6 +166,7 @@ class ViewPanel extends React.Component {
     }
 
     loadImages = () => {
+        console.log(this.state.images)
         const formData = new FormData();
         for (let image of this.state.images){
             formData.append('images', image.file);
@@ -146,16 +191,19 @@ class ViewPanel extends React.Component {
                 console.log(response.data['png']);
 
                 let obj = new Blob([response.data['obj']] , {type: 'text/plain'});
-                let png = new Blob([response.data['png']] , {type: 'image/png'});
+                let png = new Blob(["data:image/png;base64," + response.data['png']] , {type: 'image/png'});
 
                 let objUri = URL.createObjectURL(obj);
                 let pngUri = URL.createObjectURL(png);
 
+                console.log(pngUri);
+
                 this.setState({
-                    model:  objUri,
-                    texture: pngUri
+                    model:  objUri
+                    //texture: pngUri
                 });
                 this.cancelProgress();
+
             })
             .catch((error) => {
                 this.cancelProgress();
@@ -178,7 +226,11 @@ class ViewPanel extends React.Component {
                         onChange={this.handleUpload}
                     />
 
-                    <ImagesDisplay delete={this.handleDelete} images={this.state.images}/>
+                    <ImagesDisplay
+                        delete={this.handleDelete}
+                        edit={this.handleCrop}
+                        images={this.state.images}
+                    />
 
                 </Grid>
                 <Grid item xl={6} md={6} xs={12}>
@@ -210,6 +262,11 @@ class ViewPanel extends React.Component {
                     message={this.state.progressMessage}
                     value={this.state.progressValue}/> }
             </Container>
+                <CropWindow
+                    isOpen={this.state.isCropOpen}
+                    onClose={this.handleCropClose}
+                    image={this.state.currentImage?.src}
+                />
             </>
         );
     }
@@ -225,7 +282,7 @@ class ImagesDisplay extends React.Component {
             let items = [];
             for (let image of images){
                 items.push(
-                    <Grid item xl={3} md={4} xs={6} >
+                    <Grid key={items.length} item xl={3} md={4} xs={6} >
                         <Card variant={'outlined'} sx={{
                             marginTop: '1em',
                             marginBottom: '1em',
@@ -246,7 +303,7 @@ class ImagesDisplay extends React.Component {
                                 <IconButton  onClick={() => {return this.props.delete(image.name);}}>
                                     <DeleteIcon />
                                 </IconButton>
-                                <IconButton >
+                                <IconButton onClick={() => {return this.props.edit(image.name);}}>
                                     <EditIcon/>
                                 </IconButton>
 
