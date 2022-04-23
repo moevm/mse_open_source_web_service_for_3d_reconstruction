@@ -57,14 +57,21 @@ class UploadView(APIView):
 
         if meshroom_result_code == 0:
             try:
-                response = {}
-                with open(Path.joinpath(img_path, 'result', 'texturedMesh.obj'), "r") as f:
-                    response['obj'] = f.read()
+                user_folder = 'user_{}_{}'.format(request.user.id, text.slugify(timestamp))
 
-                with open(Path.joinpath(img_path, 'result', 'texturedMesh.mtl'), "r") as f:
-                    response['mtl'] = f.read()
+                response = {
+                    'obj': '/media/datasets/' + user_folder + '/result/texturedMesh.obj',
+                    'png': '/media/datasets/' + user_folder + '/result/texture_1001.png'
+                }
+
+                # with open(Path.joinpath(img_path, 'result', 'texturedMesh.obj'), "r") as f:
+                #     response['obj'] = f.read()
+                #
+                # with open(Path.joinpath(img_path, 'result', 'texturedMesh.mtl'), "r") as f:
+                #     response['mtl'] = f.read()
 
                 return JsonResponse(response, status=status.HTTP_200_OK)
+
             except FileNotFoundError:
                 return Response('Result file was not found', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
