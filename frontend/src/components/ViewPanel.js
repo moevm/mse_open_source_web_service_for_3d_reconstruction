@@ -1,73 +1,76 @@
-import React, {useMemo} from 'react'
+import React from 'react'
 import {
-    Box,
     Button,
-    Card,
-    CardActionArea, CardActions,
-    CardContent,
-    CardMedia,
     Container,
-    Grid, IconButton,
-    Paper,
+    Grid,
     Typography
 } from "@mui/material";
 import "../styles/ViewPanel.css"
 import { Canvas } from "@react-three/fiber";
-import { useLoader } from "@react-three/fiber";
 import {Environment, OrbitControls, useTexture} from "@react-three/drei";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { Suspense } from "react";
 import * as THREE from "three";
-import {DDSLoader, MTLLoader} from "three-stdlib";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
+import {DDSLoader} from "three-stdlib";
 import axios from "axios";
 import store from "../store/store";
 import mesh from "../texturedMesh.obj"
-import map from "../texturedMesh.mtl"
 import colorMap from "../texture_1001.png"
-import {TextureLoader} from "three";
 import MeshroomProgress from "./MeshroomProgress";
 import CropWindow from "./CropWindow";
+import Scene from "./Scene";
+import ImagesDisplay from "./ImagesDisplay";
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
-const Scene = (props) => {
-    const obj = useLoader(OBJLoader, props.model);
-    const texture = useTexture(props.texture);//useLoader(TextureLoader, props.texture);
-    console.log(props.model);
-    const geometry = useMemo(() => {
-        let g;
-        obj.traverse((c) => {
-            if (c.type === "Mesh") {
-                g = c.geometry;
-            }
-        });
-        return g;
-    }, [obj]);
+const recoverImages = () => {
+    try {
+        const stateStr = sessionStorage.getItem('images');
+        return stateStr ? JSON.parse(stateStr) : undefined;
+    } catch (e) {
+        console.error(e);
+        return undefined;
+    }
+}
 
-    return (
-        <mesh geometry={geometry} scale={1}>
-            <meshPhysicalMaterial map={texture} />
-        </mesh>
-    );
-};
+const saveImages = (images) => {
+    try {
+        sessionStorage.setItem('images', JSON.stringify(images));
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+const defineOffset = (images) => {
+    if (!images || images.length === 0){
+        return 0;
+    }
+    let maximum = 0;
+    images.forEach((image) => {
+        if (+image.id > maximum){
+            maximum = +image.id;
+        }
+    });
+    return maximum + 1;
+}
 
 class ViewPanel extends React.Component {
     constructor(props){
         super(props);
+        const storedImages = recoverImages() ?? [];
         this.state = {
-            images: [],
+            images: storedImages,
             model: mesh,
             texture: colorMap,
             isMeshroomStarted: false,
             progressMessage: "Photos sent to server",
             progressValue: 10,
             isCropOpen: false,
-            currentImage: null
+            currentImage: null,
+            offset: defineOffset(storedImages)
         }
         this.progressHandler = null;
     }
+
 
     handleProgress = (interval) => {
         this.setState({isMeshroomStarted: true});
@@ -96,30 +99,27 @@ class ViewPanel extends React.Component {
         }
     }
 
-    handleDelete = (name) => {
+    handleDelete = (id) => {
         this.setState({
            images: this.state.images.filter((item) => {
-               return item.name !== name;
+               return item.id !== id;
            })
         });
     }
 
-    handleCrop = (name) => {
-        let images = this.state.images.filter((item) => {
-            return item.name === name;
+    handleCrop = (id) => {
+        let image = this.state.images.filter((item) => {
+            return item.id === id;
         });
 
-        console.log(images);
-
-        if (images.length === 0){
+        if (image.length === 0){
             return;
         }
 
         this.setState({
             isCropOpen: true,
-            currentImage: images[0]
+            currentImage: image[0]
         });
-
     }
 
     handleCropClose = (newImage) => {
@@ -136,7 +136,7 @@ class ViewPanel extends React.Component {
         let curImages = this.state.images;
         this.setState({
             images: curImages.map((item) => {
-                if (item.name !== this.state.currentImage.name){
+                if (item.id !== this.state.currentImage.id){
                     return item;
                 }
                 return this.state.currentImage;
@@ -146,22 +146,26 @@ class ViewPanel extends React.Component {
 
     handleUpload = (event) => {
         let files = event.target.files;
-        for (let file of files){
-            let reader = new FileReader();
-            reader.onloadend = () => {
-                let curImages = this.state.images;
-                console.log(curImages);
-                curImages.push({
-                    src: reader.result,
-                    name: file.name,
-                    file: file
-                });
-                this.setState({
-                    images: curImages
-                });
+        let offset = this.state.offset;
+
+        Object.values(files).forEach((file, idx) => {
+            let image = {
+                id: idx + offset,
+                src: URL.createObjectURL(file),
+                name: file.name,
+                file: file
             }
-            reader.readAsDataURL(file);
-        }
+            this.setState((prevState) => {
+                return {
+                    images: prevState.images.concat(image)
+                };
+            })
+        })
+
+        this.setState({
+            offset: offset + Object.values(files).length
+        })
+
         document.getElementById("raised-button-file").value = "";
     }
 
@@ -272,73 +276,5 @@ class ViewPanel extends React.Component {
     }
 }
 
-class ImagesDisplay extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    displayImages(images){
-        if (images.length > 0){
-            let items = [];
-            for (let image of images){
-                items.push(
-                    <Grid key={items.length} item xl={3} md={4} xs={6} >
-                        <Card variant={'outlined'} sx={{
-                            marginTop: '1em',
-                            marginBottom: '1em',
-                            marginLeft: '1em',
-                        }}>
-                            <CardActionArea>
-                                <CardMedia
-                                    component="img"
-                                    image={image.src}
-                                    width={'100%'}
-                                    alt={'user photo'}
-                                />
-                                <CardContent>
-                                    <Typography color="text.secondary"> {image.name} </Typography>
-                                </CardContent>
-                            </CardActionArea>
-                            <CardActions >
-                                <IconButton  onClick={() => {return this.props.delete(image.name);}}>
-                                    <DeleteIcon />
-                                </IconButton>
-                                <IconButton onClick={() => {return this.props.edit(image.name);}}>
-                                    <EditIcon/>
-                                </IconButton>
-
-                            </CardActions>
-                        </Card>
-                    </Grid>
-
-                );
-            }
-            return (
-                <Grid container align-items={'stretch'}>
-                    {items}
-                </Grid>
-            );
-        }
-        return null;
-    }
-
-    render(){
-        return (
-            <Paper elevation={6}>
-            <Box id={'images-panel'}
-                sx={{
-                    width: '100%',
-                    height: '65vh',
-                    overflow: 'auto'
-                }}
-            >
-
-                    {this.displayImages(this.props.images)}
-
-            </Box>
-            </Paper>
-        );
-    }
-}
-
 export default ViewPanel;
+export {saveImages};

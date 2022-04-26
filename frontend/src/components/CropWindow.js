@@ -29,13 +29,13 @@ class CropWindow extends React.Component {
 
     getCroppedImg = (image, pixelCrop, fileName) => {
         const canvas = document.createElement('canvas');
-        //canvas.visible = "hidden";
+
         canvas.width = pixelCrop.width;
         canvas.height = pixelCrop.height;
+
         const ctx = canvas.getContext('2d');
         const cx = image.naturalWidth / image.width
         const cy = image.naturalHeight / image.height;
-        //image.scale(1 / cx, 1 / cy)
 
         ctx.drawImage(
             image,
