@@ -21,11 +21,20 @@ class RegistrationSerializer(serializers.ModelSerializer):
         validators=[
             UniqueValidator(
                 queryset=User.objects.all(),
-                message="A user with exact same email already exists"
+                message="A user with the exact same EMAIL already exists"
             )
         ]
     )
-    username = serializers.CharField(max_length=255)
+
+    username = serializers.CharField(
+        max_length=255,
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="A user with the exact same USERNAME already exists"
+            )
+        ]
+    )
 
     # Клиентская сторона не должна иметь возможность отправлять токен вместе с
     # запросом на регистрацию. Сделаем его доступным только на чтение.
