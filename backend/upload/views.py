@@ -9,6 +9,7 @@ from django.utils import timezone, text
 from django.conf import settings
 from django.http import HttpResponse, FileResponse
 import os
+import sys
 import zipfile
 from io import BytesIO
 from pathlib import Path
@@ -49,10 +50,14 @@ class UploadView(APIView):
             image_serializer.save()
 
         # Launch Meshroom
+        if sys.platform == 'win32' or sys.platform == 'win64':
+            python_start = 'python '
+        else:
+            python_start = 'python3 '
         img_path = settings.MEDIA_ROOT / dataset_instance.dataset_path
-        meshroom_result_code = os.system('python3 launch.py \
-                   ./Meshroom \
-                   ./pipeline_graph_template.mg \
+        meshroom_result_code = os.system(python_start + 'launch.py \
+                   Meshroom \
+                   pipeline_graph_template.mg \
                    {}'.format(img_path))
 
         if meshroom_result_code == 0:

@@ -20,9 +20,11 @@ RUN pip install --upgrade pip
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN apt update && apt install -y netcat
+RUN apt install -y dos2unix
 
 # Copy the ENTRYPOINT's script
 COPY entrypoint.sh .
+RUN dos2unix entrypoint.sh
 
 # Copy the project
 COPY . .
