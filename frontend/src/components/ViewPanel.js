@@ -239,14 +239,15 @@ class ViewPanel extends React.Component {
                 </Grid>
                 <Grid item xl={6} md={6} xs={12}>
                     <>
-                        <Typography variant={'h4'}> 3D model will be displayed here: </Typography>
+                        <MeshroomProgress />
+                        {/*<Typography variant={'h4'}> 3D model will be displayed here: </Typography>
                         <Canvas style={{ maxHeight: '65vh'}}>
                             <Suspense fallback={null}>
                                 <Scene model={this.state.model} texture={this.state.texture}/>
                                 <OrbitControls />
                                 <Environment preset="sunset" background />
                             </Suspense>
-                        </Canvas>
+                        </Canvas>*/}
                     </>
                 </Grid>
             </Grid>
