@@ -2,14 +2,7 @@ import React from 'react';
 import LinearProgress from '@mui/material/LinearProgress';
 import {Box, Paper, Table, TableContainer, Typography} from "@mui/material";
 import store from "../store/store";
-import * as PropTypes from "prop-types";
-import { DataGrid } from '@material-ui/data-grid';
-
-DataGrid.propTypes = {
-    checkboxSelection: PropTypes.bool,
-    pageSize: PropTypes.number,
-    disableSelectionOnClick: PropTypes.bool
-};
+import { DataGrid } from '@mui/x-data-grid';
 
 class MeshroomProgress extends React.Component {
     constructor(props){
@@ -56,24 +49,19 @@ class MeshroomProgress extends React.Component {
 
         }
     }
-
-    componentWillMount() {
-
-    }
-
     render(){
         return (
             <>
-                <Typography variant="h4"> A list of user "{store.getState().username}" projects. </Typography>
-                <TableContainer component={Paper}>
-                    <Table style={{ height: 490, width: "100%"}}>
-                        <DataGrid
-                            rows={this.state.rows}
-                            columns={this.state.columns}
-                            pageSize={6}
-                        />
-                    </Table>
-                </TableContainer>
+                <Typography variant="h4"> A list of your projects. </Typography>
+                <Paper elevation={6}>
+                        <div style={{height: '65vh', width: "100%"}}>
+                            <DataGrid
+                                rows={this.state.rows}
+                                columns={this.state.columns}
+                                pageSize={7}
+                            />
+                        </div>
+                </Paper>
             </>
         );
     }

@@ -238,8 +238,7 @@ class ViewPanel extends React.Component {
 
                 </Grid>
                 <Grid item xl={6} md={6} xs={12}>
-                    <>
-                        <MeshroomProgress />
+                    <MeshroomProgress />
                         {/*<Typography variant={'h4'}> 3D model will be displayed here: </Typography>
                         <Canvas style={{ maxHeight: '65vh'}}>
                             <Suspense fallback={null}>
@@ -248,7 +247,6 @@ class ViewPanel extends React.Component {
                                 <Environment preset="sunset" background />
                             </Suspense>
                         </Canvas>*/}
-                    </>
                 </Grid>
             </Grid>
             <Container data-testid={'control-panel'} maxWidth={'xl'} sx={{
