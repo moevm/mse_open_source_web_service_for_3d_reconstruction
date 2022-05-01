@@ -12,6 +12,7 @@ class Dataset(models.Model):
     dataset_path = models.CharField(max_length=255)
     created_at = models.DateTimeField()
     images_count = models.IntegerField(default=0)
+    status = models.IntegerField(default=0)
 
     def __str__(self):
         return self.user.username

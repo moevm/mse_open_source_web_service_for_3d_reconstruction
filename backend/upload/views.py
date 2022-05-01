@@ -33,7 +33,8 @@ class UploadView(APIView):
                 'user': request.user.id,
                 'dataset_path': 'datasets/user_{}_{}'.format(request.user.id, text.slugify(timestamp)),
                 'images_count': len(images),
-                'created_at': timestamp
+                'created_at': timestamp,
+                'status': 0
             }
         )
         dataset_serializer.is_valid(raise_exception=True)
@@ -100,3 +101,51 @@ class UploadView(APIView):
             #     return Response('Result file was not found', status=status.HTTP_418_IM_A_TEAPOT)
         else:
             return Response('Meshroom internal error', status=status.HTTP_418_IM_A_TEAPOT)
+
+
+class StatusView(APIView):
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+
+        dataset_instance = Dataset.objects.filter(user=request.user.id).order_by('-created_at')[0]
+        img_path = settings.MEDIA_ROOT / dataset_instance.dataset_path
+
+        folders = ["CameraInit",
+                   "FeatureExtraction",
+                   "ImageMatching",
+                   "FeatureMatching",
+                   "StructureFromMotion",
+                   "Meshing",
+                   "MeshFiltering",
+                   "Texturing",
+                   "Publish"]
+
+        if 'cache' not in os.listdir(path=img_path):
+            response = HttpResponse(0, status=status.HTTP_200_OK)
+            return response
+
+        for i in range(1, 10):
+            numeric_folder = os.listdir(path=Path.joinpath(img_path, 'cache', folders[i-1]))[0]
+            if len(os.listdir(path=Path.joinpath(img_path, 'cache', folders[i-1], numeric_folder))) < 2:
+                update = Dataset(id=dataset_instance.id,
+                                 user=dataset_instance.user,
+                                 dataset_path=dataset_instance.dataset_path,
+                                 images_count=dataset_instance.images_count,
+                                 created_at=dataset_instance.created_at,
+                                 status=i)
+                update.save()
+                response = HttpResponse(i, status=status.HTTP_200_OK)
+                return response
+
+        update = Dataset(id=dataset_instance.id,
+                         user=dataset_instance.user,
+                         dataset_path=dataset_instance.dataset_path,
+                         images_count=dataset_instance.images_count,
+                         created_at=dataset_instance.created_at,
+                         status=10)
+        update.save()
+        response = HttpResponse(10, status=status.HTTP_200_OK)
+
+        return response
