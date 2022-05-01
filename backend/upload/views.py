@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import DatasetSerializer, ImageSerializer
 from .models import Dataset
-from django.utils import timezone, text
+from django.utils import timezone, text, dateformat
 from django.conf import settings
 from django.http import HttpResponse, FileResponse, JsonResponse
 import os
@@ -76,6 +76,15 @@ class UploadView(APIView):
                 # with open(Path.joinpath(img_path, 'result', 'texturedMesh.mtl'), "r") as f:
                 #     response['mtl'] = f.read()
 
+                # Change 10 to variable
+                update = Dataset(id=dataset_instance.id,
+                                 user=dataset_instance.user,
+                                 dataset_path=dataset_instance.dataset_path,
+                                 images_count=dataset_instance.images_count,
+                                 created_at=dataset_instance.created_at,
+                                 status=10)
+                update.save()
+
                 return JsonResponse(response, status=status.HTTP_200_OK)
 
             except FileNotFoundError:
@@ -114,9 +123,9 @@ class StatusView(APIView):
 
     def post(self, request, *args, **kwargs):
 
-        dataset_instance = Dataset.objects.filter(user=request.user.id).order_by('-created_at')[0]
-        img_path = settings.MEDIA_ROOT / dataset_instance.dataset_path
+        dataset_instance = Dataset.objects.filter(user=request.user.id).order_by('created_at')
 
+        # Folders, which Meshroom create with current pipeline
         folders = ["CameraInit",
                    "FeatureExtraction",
                    "ImageMatching",
@@ -127,30 +136,75 @@ class StatusView(APIView):
                    "Texturing",
                    "Publish"]
 
-        if 'cache' not in os.listdir(path=img_path):
-            response = HttpResponse(0, status=status.HTTP_200_OK)
-            return response
+        # List of indexes of valid lines from DB (with existing dataset folder)
+        valid_dataset_index = list(range(dataset_instance.count()))
 
-        for i in range(1, 10):
-            numeric_folder = os.listdir(path=Path.joinpath(img_path, 'cache', folders[i-1]))[0]
-            if len(os.listdir(path=Path.joinpath(img_path, 'cache', folders[i-1], numeric_folder))) < 2:
-                update = Dataset(id=dataset_instance.id,
-                                 user=dataset_instance.user,
-                                 dataset_path=dataset_instance.dataset_path,
-                                 images_count=dataset_instance.images_count,
-                                 created_at=dataset_instance.created_at,
-                                 status=i)
-                update.save()
-                response = HttpResponse(i, status=status.HTTP_200_OK)
-                return response
+        # Every meshroom step have corresponding status, "Comlete" status is amount of all steps + 1
+        complete_status = len(folders) + 1
 
-        update = Dataset(id=dataset_instance.id,
-                         user=dataset_instance.user,
-                         dataset_path=dataset_instance.dataset_path,
-                         images_count=dataset_instance.images_count,
-                         created_at=dataset_instance.created_at,
-                         status=10)
-        update.save()
-        response = HttpResponse(10, status=status.HTTP_200_OK)
+        for i in range(dataset_instance.count()):
 
-        return response
+            try:
+                img_path = settings.MEDIA_ROOT / dataset_instance[i].dataset_path
+
+                if 'cache' not in os.listdir(path=img_path):
+                    if dataset_instance[i].status == 0:
+                        continue
+                    else:
+                        valid_dataset_index.remove(i)
+                        continue
+
+                # 3 cause of minimal number of creating result files
+                if dataset_instance[i].status == complete_status:
+                    if 'result' in os.listdir(path=img_path) and len(os.listdir(path=Path.joinpath(img_path, 'result'))) >= 3:
+                        continue
+                    else:
+                        valid_dataset_index.remove(i)
+                        continue
+
+                for curr_status in range(1, complete_status):
+                    numeric_folder = os.listdir(path=Path.joinpath(img_path, 'cache', folders[curr_status-1]))[0]
+                    # In this folders file "status" is already exist, if that's all, this step in progress
+                    if len(os.listdir(path=Path.joinpath(img_path, 'cache', folders[curr_status-1], numeric_folder))) < 2:
+                        update = Dataset(id=dataset_instance[i].id,
+                                         user=dataset_instance[i].user,
+                                         dataset_path=dataset_instance[i].dataset_path,
+                                         images_count=dataset_instance[i].images_count,
+                                         created_at=dataset_instance[i].created_at,
+                                         status=curr_status)
+                        update.save()
+                        break
+
+                if 'result' in os.listdir(path=img_path) and len(os.listdir(path=Path.joinpath(img_path, 'result'))) >= 3:
+                    update = Dataset(id=dataset_instance[i].id,
+                                     user=dataset_instance[i].user,
+                                     dataset_path=dataset_instance[i].dataset_path,
+                                     images_count=dataset_instance[i].images_count,
+                                     created_at=dataset_instance[i].created_at,
+                                     status=complete_status)
+                    update.save()
+
+            # If folder with dataset doesn't exist, but DB gave info about it
+            except FileNotFoundError:
+                valid_dataset_index.remove(i)
+                continue
+
+        projects = []
+
+        for i in valid_dataset_index:
+            if dataset_instance[i].status == 0:
+                comment = "В ожидании"
+            elif dataset_instance[i].status == complete_status:
+                comment = "Готово"
+            else:
+                comment = "В процессе"
+
+            project = {'Created_at': dateformat.format(dataset_instance[i].created_at, "M j Y H:i:s"),
+                       'Status': "{}%".format(int(dataset_instance[i].status * (1 / complete_status) * 100)),
+                       'Comment': comment}
+
+            projects.append(project)
+
+        response = {'projects': projects}
+
+        return JsonResponse(response, status=status.HTTP_200_OK)
