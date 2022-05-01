@@ -51,10 +51,15 @@ class UploadView(APIView):
 
         # Launch Meshroom
         img_path = settings.MEDIA_ROOT / dataset_instance.dataset_path
-        meshroom_result_code = os.system('python3 launch.py \
-                   ./Meshroom \
-                   ./pipeline_graph_template.mg \
-                   {}'.format(img_path))
+        python3_result_code = os.system('python3 -V')
+        if python3_result_code == 0:
+            python_version = 'python3'
+        else:
+            python_version = 'python'
+        meshroom_result_code = os.system(python_version + ' launch.py \
+                                   Meshroom \
+                                   pipeline_graph_template.mg \
+                                   {}'.format(img_path))
 
         if meshroom_result_code == 0:
             try:

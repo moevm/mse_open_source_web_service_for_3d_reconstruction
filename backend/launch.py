@@ -15,18 +15,31 @@ def create_dir(path):
 
 
 def run(bin_path, mg_path, img_path, additional_parameters):
-    sensor_database = bin_path + "/aliceVision/share/aliceVision/cameraSensors.db"
-    tree = bin_path + "/aliceVision/share/aliceVision/vlfeat_K80L3.SIFT.tree"
+    if sys.platform == 'win32' or sys.platform == 'win64':
+        print(bin_path, mg_path, img_path, additional_parameters)
+        sensor_database = bin_path + "\\aliceVision\\share\\aliceVision\\cameraSensors.db"
+        tree = bin_path + "\\aliceVision\\share\\aliceVision\\vlfeat_K80L3.SIFT.tree"
 
-    create_dir("{}/result".format(img_path))
-    cmd = "{}/meshroom_batch ".format(bin_path) + \
-        "--input {} ".format(img_path) + \
-        "--cache {}/cache ".format(img_path) + \
-        "--pipeline {} ".format(mg_path) + \
-        "--paramOverrides CameraInit.sensorDatabase={} ImageMatching.tree={} ".format(sensor_database, tree) + \
-        "--output {}/result ".format(img_path) + \
-        " ".join(additional_parameters)
-    
+        create_dir("{}\\result".format(img_path))
+        cmd = "{}\\meshroom_batch ".format(bin_path) + \
+              "--input {} ".format(img_path) + \
+              "--cache {}\\cache ".format(img_path) + \
+              "--pipeline {} ".format(mg_path) + \
+              "--paramOverrides CameraInit.sensorDatabase={} ImageMatching.tree={} ".format(sensor_database, tree) + \
+              "--output {}\\result ".format(img_path) + \
+              " ".join(additional_parameters)
+    else:
+        sensor_database = bin_path + "/aliceVision/share/aliceVision/cameraSensors.db"
+        tree = bin_path + "/aliceVision/share/aliceVision/vlfeat_K80L3.SIFT.tree"
+
+        create_dir("{}/result".format(img_path))
+        cmd = "{}/meshroom_batch ".format(bin_path) + \
+            "--input {} ".format(img_path) + \
+            "--cache {}/cache ".format(img_path) + \
+            "--pipeline {} ".format(mg_path) + \
+            "--paramOverrides CameraInit.sensorDatabase={} ImageMatching.tree={} ".format(sensor_database, tree) + \
+            "--output {}/result ".format(img_path) + \
+            " ".join(additional_parameters)
     print(cmd)
     os.system(cmd)
 
