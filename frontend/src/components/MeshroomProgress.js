@@ -43,7 +43,7 @@ class MeshroomProgress extends React.Component {
         this.state= {
             rows:[
                 { id: 1, datasets: 'user1_123131323222', status: 10,message: "sd" },
-                { id: 2, datasets: 'user1_123131323222', status: 10,message: "xuy init" },
+                { id: 2, datasets: 'user1_123131323222', status: 10,message: "fff" },
                 { id: 3, datasets: 'user1_123131323222', status: 7,message: "CasdfACAS" },
                 { id: 4, datasets: 'user1_123131323222', status: 5,message: "CACAS" },
                 { id: 5, datasets: 'user1_123131323222', status: 3,message: "CACAasasdfS" },

@@ -65,24 +65,24 @@ class CropWindow extends React.Component {
                     this.setState({
                         currentImage: blobUrl
                     })
-                    let element = document.createElement("a");
-                    element.href = this.state.currentImage;
-                    element.download = "cropped.png";
-                    element.click();
+                    this.download();
                 })
         } else {
-            let element = document.createElement("a");
-            element.href = this.state.currentImage;
-            element.download = "cropped.png";
-            element.click();
+            this.download();
         }
+    }
+
+    download = () => {
+        let element = document.createElement("a");
+        element.href = this.state.currentImage;
+        element.download = "cropped.png";
+        element.click();
     }
 
     render(){
         return (
             <Dialog
                 open={this.props.isOpen}
-                //onClose={this.props.handleClose}
                 aria-labelledby="crop-dialog-title"
                 aria-describedby="crop-dialog-description"
             >

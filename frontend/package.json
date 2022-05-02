@@ -15,6 +15,8 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^0.26.1",
     "croppie": "^2.6.5",
+    "dexie": "^3.2.2",
+    "dexie-react-hooks": "^1.1.1",
     "jest-config": "^27.5.1",
     "jszip": "^3.9.1",
     "react": "^17.0.2",

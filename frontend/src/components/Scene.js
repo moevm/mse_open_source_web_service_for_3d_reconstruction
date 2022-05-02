@@ -4,6 +4,20 @@ import {useTexture} from "@react-three/drei";
 import React, {useMemo} from "react";
 import mesh from "../texturedMesh.obj";
 
+
+/*
+HOW TO DISPLAY SCENE
+
+<Canvas style={{ maxHeight: '65vh'}}>
+    <Suspense fallback={null}>
+        <Scene model={this.state.model} texture={this.state.texture}/>
+        <OrbitControls />
+        <Environment preset="sunset" background />
+    </Suspense>
+</Canvas>
+ */
+
+
 const Scene = (props) => {
     const obj = useLoader(OBJLoader, props.model);
     const texture = useTexture(props.texture);//useLoader(TextureLoader, props.texture);

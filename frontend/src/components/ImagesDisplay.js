@@ -20,9 +20,9 @@ class ImagesDisplay extends React.Component {
         super(props);
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    /*componentDidUpdate(prevProps, prevState, snapshot) {
         saveImages(this.props.images);
-    }
+    }*/
 
     displayImages(images){
         if (images.length > 0){
