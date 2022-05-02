@@ -1,3 +1,5 @@
+# For local development
+
 version: "3.5"
 
 services:
@@ -12,6 +14,7 @@ services:
       - POSTGRES_NAME=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
   backend:
     container_name: "3d_backend"
     build: ./backend
@@ -20,15 +23,16 @@ services:
     network_mode: host
     env_file:
       - ./.env.dev
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
+
   frontend:
     container_name: "3d_frontend"
     restart: unless-stopped
     build: ./frontend
     network_mode: host
-#    depends_on:
-#      - backend
+    # depends_on:
+    #   - backend
 
 volumes:
   postgres_data:
