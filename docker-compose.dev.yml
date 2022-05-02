@@ -1,0 +1,39 @@
+# For docker-based local development
+
+version: "3.5"
+
+services:
+  db:
+    container_name: "3d_db"
+    image: postgres:14
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  backend:
+    container_name: "3d_backend"
+    build: ./backend
+    restart: unless-stopped
+    command: python3 manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+
+  frontend:
+    container_name: "3d_frontend"
+    restart: unless-stopped
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
