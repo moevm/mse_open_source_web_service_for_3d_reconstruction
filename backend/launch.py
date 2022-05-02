@@ -15,18 +15,25 @@ def create_dir(path):
 
 
 def run(bin_path, mg_path, img_path, additional_parameters):
-    sensor_database = bin_path + "/aliceVision/share/aliceVision/cameraSensors.db"
-    tree = bin_path + "/aliceVision/share/aliceVision/vlfeat_K80L3.SIFT.tree"
+    print(bin_path, mg_path, img_path, additional_parameters)
 
-    create_dir("{}/result".format(img_path))
-    cmd = "{}/meshroom_batch ".format(bin_path) + \
-        "--input {} ".format(img_path) + \
-        "--cache {}/cache ".format(img_path) + \
-        "--pipeline {} ".format(mg_path) + \
-        "--paramOverrides CameraInit.sensorDatabase={} ImageMatching.tree={} ".format(sensor_database, tree) + \
-        "--output {}/result ".format(img_path) + \
-        " ".join(additional_parameters)
-    
+    bin_path = Path(bin_path)
+    mg_path = Path(mg_path)
+    img_path = Path(img_path)
+
+    sensor_database = bin_path / 'aliceVision' / 'share' / 'aliceVision' / 'cameraSensors.db'
+    tree = bin_path / 'aliceVision' / 'share' / 'aliceVision' / 'vlfeat_K80L3.SIFT.tree'
+
+    create_dir(img_path / 'result')
+
+    cmd = "{} ".format(bin_path / 'meshroom_batch') + \
+          "--input {} ".format(img_path) + \
+          "--cache {} ".format(img_path / 'cache') + \
+          "--pipeline {} ".format(mg_path) + \
+          "--paramOverrides CameraInit.sensorDatabase={} ImageMatching.tree={} ".format(sensor_database, tree) + \
+          "--output {} ".format(img_path / 'result') + \
+          " ".join(additional_parameters)
+
     print(cmd)
     os.system(cmd)
 
