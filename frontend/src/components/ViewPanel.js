@@ -22,6 +22,20 @@ import ImagesDisplay from "./ImagesDisplay";
 import DbDispatcher from "../database/dbDispatcher";
 import {server} from "../index";
 
+
+const testData = [
+    { id: 1, datasets: 'user1_123131323222', status: 100,message: "sd" },
+    { id: 2, datasets: 'user1_123131323222', status: 100,message: "fff" },
+    { id: 3, datasets: 'user1_123131323222', status: 70,message: "CasdfACAS" },
+    { id: 4, datasets: 'user1_123131323222', status: 50,message: "CACAS" },
+    { id: 5, datasets: 'user1_123131323222', status: 30,message: "CACAasasdfS" },
+    { id: 6, datasets: 'user1_123131323222', status: 30,message: "CACAS" },
+    { id: 7, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
+    { id: 8, datasets: 'user1_123131323222', status: 0,message: "CACAasasdfS" },
+    { id: 9, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
+    { id: 10, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
+]
+
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
 const recoverFileFromDataURI = (dataURI, name) => {
@@ -65,7 +79,7 @@ class ViewPanel extends React.Component {
             isCropOpen: false,
             currentImage: null,
             offset: 0,
-            projects: []
+            projects: testData
         }
         this.statusHandler = null;
         this.dbDispatcher = new DbDispatcher();
@@ -89,6 +103,7 @@ class ViewPanel extends React.Component {
         this.statusHandler = setInterval(() => {
             this.handleStatus();
         }, interval);
+        this.handleStatus();
     }
 
     componentWillUnmount() {
@@ -182,6 +197,17 @@ class ViewPanel extends React.Component {
         return formData;
     }
 
+    parseStatus = (data) => {
+        return data.map((item, idx) => {
+            return {
+                id: idx,
+                datasets: data["Created_at"],
+                status: +data["Status"],
+                message: data["Comment"]
+            }
+        })
+    }
+
     handleStatus = () => {
         let requestUrl = server + 'upload/status';
         const config = {
@@ -194,7 +220,7 @@ class ViewPanel extends React.Component {
             .then((response) => {
                 console.log(response.data.projects);
                 this.setState({
-                    projects: response.data.projects
+                    projects: this.parseStatus(response.data.projects)
                 });
             })
             .catch((err) => {
@@ -257,7 +283,9 @@ class ViewPanel extends React.Component {
 
                 </Grid>
                 <Grid item xl={6} md={6} xs={12}>
-                    <MeshroomProgress/>
+                    <MeshroomProgress
+                        tableData={this.state.projects}
+                    />
                 </Grid>
             </Grid>
             <Container data-testid={'control-panel'} maxWidth={'xl'} sx={{

@@ -31,11 +31,12 @@ const StyledTableRow = withStyles((theme) => ({
     },
 }))(TableRow);
 
-class MeshroomProgress extends React.Component {
-    constructor(props){
-        super(props);
-        this.state= {
-            rows:[
+/*
+--------------
+|  test data |
+--------------
+
+[
                 { id: 1, datasets: 'user1_123131323222', status: 10,message: "sd" },
                 { id: 2, datasets: 'user1_123131323222', status: 10,message: "fff" },
                 { id: 3, datasets: 'user1_123131323222', status: 7,message: "CasdfACAS" },
@@ -46,7 +47,14 @@ class MeshroomProgress extends React.Component {
                 { id: 8, datasets: 'user1_123131323222', status: 0,message: "CACAasasdfS" },
                 { id: 9, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
                 { id: 10, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-            ],
+            ]
+*/
+
+class MeshroomProgress extends React.Component {
+    constructor(props){
+        super(props);
+        this.state= {
+            rows: props.tableData,
             columns : [
                 {
                     field: 'id',
@@ -78,8 +86,8 @@ class MeshroomProgress extends React.Component {
         }
     }
 
-    check_downloadable(row){
-        if(row.status === 10){
+    isDownloadable(row){
+        if(row.status === 100){
             return (
                 <TableCell>
                     <a href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'>
@@ -130,7 +138,7 @@ class MeshroomProgress extends React.Component {
                                             <TableCell>{row.id} </TableCell>
                                             <TableCell>{row.datasets} </TableCell>
                                             <TableCell>{row.status} </TableCell>
-                                            {this.check_downloadable(row)}
+                                            {this.isDownloadable(row)}
                                         </StyledTableRow>
                                         ))}
                                 </TableBody>
