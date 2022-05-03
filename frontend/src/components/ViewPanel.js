@@ -64,13 +64,16 @@ class ViewPanel extends React.Component {
             progressValue: 10,
             isCropOpen: false,
             currentImage: null,
-            offset: 0//defineOffset(storedImages)
+            offset: 0,
+            projects: []
         }
-        this.progressHandler = null;
+        this.statusHandler = null;
         this.dbDispatcher = new DbDispatcher();
     }
 
     componentDidMount() {
+        const interval = 60000;
+
         this.dbDispatcher.getImages()
             .then((images) => {
                 console.log(images);
@@ -82,34 +85,16 @@ class ViewPanel extends React.Component {
             .catch((err) => {
                 console.log(err);
             })
-    }
 
-    componentWillUnmount() {
-        if (this.progressHandler){
-            clearInterval(this.progressHandler);
-        }
-    }
-
-
-    handleProgress = (interval) => {
-        this.setState({isMeshroomStarted: true});
-        this.progressHandler = setInterval(() => {
-            let requestUrl = 'http://localhost:8000/state/';
-            axios.get(requestUrl)
-                .then((response) => {
-                   this.setState({
-                       progressMessage: response.message,
-                       progressValue: +response.value
-                   });
-                }).catch((err) => {
-                   console.log(err);
-                });
+        this.statusHandler = setInterval(() => {
+            this.handleStatus();
         }, interval);
     }
 
-    cancelProgress = () => {
-        this.setState({isMeshroomStarted: false});
-        clearInterval(this.progressHandler);
+    componentWillUnmount() {
+        if (this.statusHandler){
+            clearInterval(this.progressHandler);
+        }
     }
 
     handleDelete = (id) => {
@@ -197,10 +182,27 @@ class ViewPanel extends React.Component {
         return formData;
     }
 
-    handleStart = () => {
-        //const progressHandlerInterval = 1000;
-        //this.handleProgress(progressHandlerInterval);
+    handleStatus = () => {
+        let requestUrl = server + 'upload/status';
+        const config = {
+            headers: {
+                'authorization': 'Bearer ' + store.getState().token
+            }
+        }
 
+        axios.post(requestUrl, null, config)
+            .then((response) => {
+                console.log(response.data.projects);
+                this.setState({
+                    projects: response.data.projects
+                });
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    }
+
+    handleStart = () => {
         let requestUrl = server + 'upload/';
         const config = {
             headers: {
@@ -225,8 +227,6 @@ class ViewPanel extends React.Component {
                     model:  objUri,
                     texture: pngUri
                 });
-                this.cancelProgress();
-
             })
             .catch((error) => {
                 //this.cancelProgress();
