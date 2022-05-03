@@ -21,8 +21,17 @@ services:
     restart: unless-stopped
     command: python3 manage.py runserver 0.0.0.0:8000
     network_mode: host
-    env_file:
-      - ./.env.dev
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=foo
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=postgres
+      - SQL_USER=postgres
+      - SQL_PASSWORD=postgres
+      - SQL_HOST=localhost
+      - SQL_PORT=5432
+      - DATABASE=postgres
     # depends_on:
     #   - db
 
