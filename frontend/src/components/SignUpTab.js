@@ -3,6 +3,7 @@ import {Button, Container, Link, Paper, TextField, Typography} from "@mui/materi
 import axios from "axios";
 import {Navigate} from "react-router-dom";
 import AuthDialog from "./AuthDialog";
+import {server} from "../index";
 
 class SignUpTab extends React.Component {
     constructor(props){
@@ -73,7 +74,7 @@ class SignUpTab extends React.Component {
             return;
         }
 
-        let requestUrl = 'http://localhost:8000/api/users/';
+        let requestUrl = server + 'api/users/';
         let requestData = {
             method: 'POST',
             headers: {

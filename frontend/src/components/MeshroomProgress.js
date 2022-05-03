@@ -1,7 +1,5 @@
 import React from 'react';
-import LinearProgress from '@mui/material/LinearProgress';
 import {
-    Box,
     Paper,
     Table,
     TableBody,
@@ -12,12 +10,8 @@ import {
     TableRow,
     Typography
 } from "@mui/material";
-import { withStyles, makeStyles } from '@material-ui/core/styles';
-import store from "../store/store";
-import { DataGrid } from '@mui/x-data-grid';
+import { withStyles } from '@material-ui/core/styles';
 import GetAppIcon from '@material-ui/icons/GetApp';
-import TablePaginationActions from "@material-ui/core/TablePagination/TablePaginationActions";
-import {TableFooter} from "@material-ui/core";
 
 const StyledTableCell = withStyles((theme) => ({
     head: {

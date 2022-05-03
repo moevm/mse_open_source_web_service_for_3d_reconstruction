@@ -20,6 +20,7 @@ import CropWindow from "./CropWindow";
 import Scene from "./Scene";
 import ImagesDisplay from "./ImagesDisplay";
 import DbDispatcher from "../database/dbDispatcher";
+import {server} from "../index";
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
@@ -200,7 +201,7 @@ class ViewPanel extends React.Component {
         //const progressHandlerInterval = 1000;
         //this.handleProgress(progressHandlerInterval);
 
-        let requestUrl = 'http://localhost:8000/upload/';
+        let requestUrl = server + 'upload/';
         const config = {
             headers: {
                 'content-type': 'multipart/form-data',
