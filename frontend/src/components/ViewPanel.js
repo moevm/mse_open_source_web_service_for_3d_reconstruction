@@ -216,9 +216,9 @@ class ViewPanel extends React.Component {
             }
         }
 
-        axios.post(requestUrl, null, config)
+        axios.get(requestUrl, config)
             .then((response) => {
-                console.log(response.data.projects);
+                console.log(response);
                 this.setState({
                     projects: this.parseStatus(response.data.projects)
                 });

@@ -1,4 +1,3 @@
-
 import { createStore } from 'redux';
 import authReducer from "./reducers/authReducer";
 import initialState from "./initialState";
