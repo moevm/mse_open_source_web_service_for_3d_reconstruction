@@ -36,7 +36,7 @@ services:
       - static_volume:/home/app/backend/staticfiles
       - media_volume:/home/app/backend/mediafiles
     ports:
-      - "1337:80"
+      - "8000:80"
     depends_on:
       - backend
 
