@@ -53,8 +53,7 @@ const StyledTableRow = withStyles((theme) => ({
 class MeshroomProgress extends React.Component {
     constructor(props){
         super(props);
-        this.state= {
-            rows: props.tableData,
+        this.state = {
             columns : [
                 {
                     field: 'id',
@@ -133,11 +132,11 @@ class MeshroomProgress extends React.Component {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {this.state.rows.slice(this.state.page * this.state.rowsPerPage, this.state.page * this.state.rowsPerPage + this.state.rowsPerPage).map(row =>(
+                                    {this.props.rows.slice(this.state.page * this.state.rowsPerPage, this.state.page * this.state.rowsPerPage + this.state.rowsPerPage).map(row =>(
                                         <StyledTableRow key={row.id}>
                                             <TableCell>{row.id} </TableCell>
                                             <TableCell>{row.datasets} </TableCell>
-                                            <TableCell>{row.status} </TableCell>
+                                            <TableCell>{`${row.status}%`} </TableCell>
                                             {this.isDownloadable(row)}
                                         </StyledTableRow>
                                         ))}
@@ -147,7 +146,7 @@ class MeshroomProgress extends React.Component {
                         <TablePagination
                             rowsPerPageOptions={[7, 10, 15]}
                             component="div"
-                            count={this.state.rows.length}
+                            count={this.props.rows.length}
                             rowsPerPage={this.state.rowsPerPage}
                             page={this.state.page}
                             onPageChange={this.handleChangePage}

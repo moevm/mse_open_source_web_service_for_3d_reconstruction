@@ -201,9 +201,9 @@ class ViewPanel extends React.Component {
         return data.map((item, idx) => {
             return {
                 id: idx,
-                datasets: data["Created_at"],
-                status: +data["Status"],
-                message: data["Comment"]
+                datasets: item["Created_at"],
+                status: +item["Status"],
+                message: item["Comment"]
             }
         })
     }
@@ -284,7 +284,7 @@ class ViewPanel extends React.Component {
                 </Grid>
                 <Grid item xl={6} md={6} xs={12}>
                     <MeshroomProgress
-                        tableData={this.state.projects}
+                        rows={this.state.projects}
                     />
                 </Grid>
             </Grid>
