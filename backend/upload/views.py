@@ -76,7 +76,7 @@ class UploadView(APIView):
                 # with open(Path.joinpath(img_path, 'result', 'texturedMesh.mtl'), "r") as f:
                 #     response['mtl'] = f.read()
 
-                # Change 10 to variable
+                # TODO: Change 10 to variable
                 update = Dataset(id=dataset_instance.id,
                                  user=dataset_instance.user,
                                  dataset_path=dataset_instance.dataset_path,
@@ -121,7 +121,7 @@ class StatusView(APIView):
     permission_classes = (IsAuthenticated,)
     parser_classes = (MultiPartParser, FormParser)
 
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
 
         dataset_instance = Dataset.objects.filter(user=request.user.id).order_by('created_at')
 
@@ -195,12 +195,12 @@ class StatusView(APIView):
             if dataset_instance[i].status == 0:
                 comment = "В ожидании"
             elif dataset_instance[i].status == complete_status:
-                comment = "Готово"
+                comment = "http://localhost:8000/upload/download/?project=user_{}_{}".format(request.user.id, text.slugify(dataset_instance[i].created_at))
             else:
                 comment = "В процессе"
 
             project = {'Created_at': dateformat.format(dataset_instance[i].created_at, "M j Y H:i:s"),
-                       'Status': "{}%".format(int(dataset_instance[i].status * (1 / complete_status) * 100)),
+                       'Status': "{}".format(int(dataset_instance[i].status * (1 / complete_status) * 100)),
                        'Comment': comment}
 
             projects.append(project)
@@ -208,3 +208,48 @@ class StatusView(APIView):
         response = {'projects': projects}
 
         return JsonResponse(response, status=status.HTTP_200_OK)
+
+
+class DownloadView(APIView):
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get(self, request, *args, **kwargs):
+
+        project = request.GET.get('project', '')
+        if project == '':
+            return Response('Bad Request', status=status.HTTP_418_IM_A_TEAPOT)
+
+        project_info = project.split("_")
+
+        if project_info[1] != str(request.user.id):
+            return Response('Wrong user', status=status.HTTP_403_FORBIDDEN)
+
+        dataset_instance = Dataset.objects.filter(user=request.user.id).filter(dataset_path="datasets/" + project)
+
+        if not dataset_instance:
+            return Response('Result file was not found', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            # TODO: Maybe there are several .png files. You should consider this case.
+            filenames = ['texturedMesh.obj', 'texture_1001.png']
+
+            # Folder name in ZIP archive which contains the above files
+            # E.g [thearchive.zip]/dirname/abracadabra.txt
+            zip_subdir = "/"
+
+            bytes_stream = BytesIO()
+            with zipfile.ZipFile(bytes_stream, 'w') as zip_file:
+                for filename in filenames:
+                    filepath = Path.joinpath(settings.MEDIA_ROOT, 'datasets', project, 'result', filename)
+                    zip_filepath = os.path.join(zip_subdir, filename)
+                    zip_file.write(filepath, zip_filepath)
+
+            response = HttpResponse(bytes_stream.getvalue(),
+                                    content_type='application/zip',
+                                    status=status.HTTP_200_OK)
+
+            return response
+
+        except FileNotFoundError:
+            return Response('Result file was not found', status=status.HTTP_418_IM_A_TEAPOT)
