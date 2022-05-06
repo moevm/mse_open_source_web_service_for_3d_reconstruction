@@ -27,7 +27,7 @@ SECRET_KEY = 'foo'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", default=True)
+DEBUG = os.environ.get("DEBUG", default='False') == 'True'
 
 try:
     ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
@@ -133,12 +133,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-MEDIA_ROOT = BASE_DIR / 'media'
 # URL that handles the media served from MEDIA_ROOT, used for managing stored files.
-MEDIA_URL = '/media/'
+MEDIA_URL = 'media/'
+# Absolute filesystem path to the directory that will hold user-uploaded files.
+MEDIA_ROOT = BASE_DIR / 'mediafiles'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -159,9 +160,4 @@ REST_FRAMEWORK = {
     ),
 }
 
-# fau = 'http://localhost:3000'
-# if 'FRONTEND_APP_URL' in os.environ:
-#     fau = os.environ['FRONTEND_APP_URL']
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000'
-]
+CORS_ORIGIN_ALLOW_ALL = os.environ.get("DJANGO_CORS_ORIGIN_ALLOW_ALL", default='False') == 'True'
