@@ -90,29 +90,6 @@ class UploadView(APIView):
             except FileNotFoundError:
                 return Response('Result file was not found', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            # try:
-            #     # TODO: Maybe there are several .png files. You should consider this case.
-            #     filenames = ['texturedMesh.obj', 'texture_1001.png']
-            #
-            #     # Folder name in ZIP archive which contains the above files
-            #     # E.g [thearchive.zip]/dirname/abracadabra.txt
-            #     zip_subdir = "/"
-            #
-            #     bytes_stream = BytesIO()
-            #     with zipfile.ZipFile(bytes_stream, 'w') as zip_file:
-            #         for filename in filenames:
-            #             filepath = Path.joinpath(img_path, 'result', filename)
-            #             zip_filepath = os.path.join(zip_subdir, filename)
-            #             zip_file.write(filepath, zip_filepath)
-            #
-            #     response = HttpResponse(bytes_stream.getvalue(),
-            #                             content_type='application/zip',
-            #                             status=status.HTTP_200_OK)
-            #
-            #     return response
-            #
-            # except FileNotFoundError:
-            #     return Response('Result file was not found', status=status.HTTP_418_IM_A_TEAPOT)
         else:
             return Response('Meshroom internal error', status=status.HTTP_418_IM_A_TEAPOT)
 
@@ -123,6 +100,7 @@ class StatusView(APIView):
 
     def get(self, request, *args, **kwargs):
 
+        # Get all user's projects in DB
         dataset_instance = Dataset.objects.filter(user=request.user.id).order_by('created_at')
 
         # Folders, which Meshroom create with current pipeline
@@ -147,6 +125,7 @@ class StatusView(APIView):
             try:
                 img_path = settings.MEDIA_ROOT / dataset_instance[i].dataset_path
 
+                # Check 'cache' folder: if no folder and status 0 - valid, if no folder and status not 0 - invalid
                 if 'cache' not in os.listdir(path=img_path):
                     if dataset_instance[i].status == 0:
                         continue
@@ -154,7 +133,7 @@ class StatusView(APIView):
                         valid_dataset_index.remove(i)
                         continue
 
-                # 3 cause of minimal number of creating result files
+                # If project have last status and result with files exist in local - valid, if no result - invalid
                 if dataset_instance[i].status == complete_status:
                     if 'result' in os.listdir(path=img_path) and len(os.listdir(path=Path.joinpath(img_path, 'result'))) >= 3:
                         continue
@@ -162,6 +141,7 @@ class StatusView(APIView):
                         valid_dataset_index.remove(i)
                         continue
 
+                # Update curr project status
                 for curr_status in range(1, complete_status):
                     numeric_folder = os.listdir(path=Path.joinpath(img_path, 'cache', folders[curr_status-1]))[0]
                     # In this folders file "status" is already exist, if that's all, this step in progress
@@ -175,6 +155,7 @@ class StatusView(APIView):
                         update.save()
                         break
 
+                # Give last status if result exist
                 if 'result' in os.listdir(path=img_path) and len(os.listdir(path=Path.joinpath(img_path, 'result'))) >= 3:
                     update = Dataset(id=dataset_instance[i].id,
                                      user=dataset_instance[i].user,
@@ -184,7 +165,7 @@ class StatusView(APIView):
                                      status=complete_status)
                     update.save()
 
-            # If folder with dataset doesn't exist, but DB gave info about it
+            # If folder with dataset, cache or result doesn't exist, but DB gave info about it
             except FileNotFoundError:
                 valid_dataset_index.remove(i)
                 continue
@@ -194,6 +175,7 @@ class StatusView(APIView):
         for i in valid_dataset_index:
             if dataset_instance[i].status == 0:
                 comment = "Waiting"
+            # Link to download curr project
             elif dataset_instance[i].status == complete_status:
                 comment = "http://localhost:8000/upload/download/?project=user_{}_{}".format(request.user.id, text.slugify(dataset_instance[i].created_at))
             else:
