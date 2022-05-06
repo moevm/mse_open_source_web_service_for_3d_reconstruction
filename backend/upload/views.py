@@ -193,11 +193,11 @@ class StatusView(APIView):
 
         for i in valid_dataset_index:
             if dataset_instance[i].status == 0:
-                comment = "В ожидании"
+                comment = "Waiting"
             elif dataset_instance[i].status == complete_status:
                 comment = "http://localhost:8000/upload/download/?project=user_{}_{}".format(request.user.id, text.slugify(dataset_instance[i].created_at))
             else:
-                comment = "В процессе"
+                comment = "In progress"
 
             project = {'Created_at': dateformat.format(dataset_instance[i].created_at, "M j Y H:i:s"),
                        'Status': "{}".format(int(dataset_instance[i].status * (1 / complete_status) * 100)),
