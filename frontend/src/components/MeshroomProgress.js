@@ -12,6 +12,9 @@ import {
 } from "@mui/material";
 import { withStyles } from '@material-ui/core/styles';
 import GetAppIcon from '@material-ui/icons/GetApp';
+import {server} from "../index";
+import store from "../store/store";
+import axios from "axios";
 
 const StyledTableCell = withStyles((theme) => ({
     head: {
@@ -85,11 +88,37 @@ class MeshroomProgress extends React.Component {
         }
     }
 
+    downloadResult = (downloadUrl, fileName) => {
+        const config = {
+            headers: {
+                'authorization': 'Bearer ' + store.getState().token
+            },
+            responseType: 'blob'
+        }
+        axios.get(downloadUrl, config)
+            .then((response) => {
+                console.log(response.data);
+                let archive = response.data; //new Blob([response.data] , {type: 'application/zip'});
+                let archiveUrl = URL.createObjectURL(archive);
+                let link = document.createElement("a");
+                link.href = archiveUrl;
+                link.download = `${fileName}.zip`;
+                link.click();
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
+
     isDownloadable(row){
         if(row.status === 100){
+            const downloadUrl = row.message;
+            const fileName = `Dataset: ${row.datasets}`;
             return (
                 <TableCell>
-                    <a href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'>
+                    <a onClick={() => {
+                        this.downloadResult(downloadUrl, fileName);
+                    }} download>
                         <GetAppIcon/>
                     </a>
                 </TableCell>

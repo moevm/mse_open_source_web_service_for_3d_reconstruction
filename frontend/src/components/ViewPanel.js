@@ -86,7 +86,7 @@ class ViewPanel extends React.Component {
     }
 
     componentDidMount() {
-        const interval = 60000;
+        const interval = 30000;
 
         this.dbDispatcher.getImages()
             .then((images) => {
@@ -209,7 +209,7 @@ class ViewPanel extends React.Component {
     }
 
     handleStatus = () => {
-        let requestUrl = server + 'upload/status';
+        let requestUrl = server + 'upload/status/';
         const config = {
             headers: {
                 'authorization': 'Bearer ' + store.getState().token

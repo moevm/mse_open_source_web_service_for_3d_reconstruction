@@ -4,7 +4,7 @@ import './index.css';
 import reportWebVitals from './reportWebVitals';
 import App from "./components/App";
 
-export const server = 'http://localhost:1337/';
+export const server = 'http://localhost:8000/';
 
 const render = () => ReactDOM.render(
   <React.StrictMode>
