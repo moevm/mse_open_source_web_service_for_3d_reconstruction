@@ -1,5 +1,1 @@
 .idea
-
-backend/**/__pycache__/
-backend/**/migrations
-backend/static

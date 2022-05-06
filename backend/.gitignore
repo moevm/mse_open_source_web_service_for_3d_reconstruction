@@ -8,4 +8,9 @@ venv
 Meshroom
 
 # See MEDIA_ROOT in settings.py
-media
+mediafiles
+
+# See STATIC_ROOT in settings.py
+staticfiles
+
+**/__pycache__/
