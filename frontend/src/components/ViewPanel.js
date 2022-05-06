@@ -1,134 +1,235 @@
-import React, {useMemo} from 'react'
+import React from 'react'
 import {
-    Box,
     Button,
-    Card,
-    CardActionArea, CardActions,
-    CardContent,
-    CardMedia,
     Container,
-    Grid, IconButton,
-    Paper,
+    Grid,
     Typography
 } from "@mui/material";
 import "../styles/ViewPanel.css"
 import { Canvas } from "@react-three/fiber";
-import { useLoader } from "@react-three/fiber";
-import { Environment, OrbitControls } from "@react-three/drei";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import {Environment, OrbitControls, useTexture} from "@react-three/drei";
 import { Suspense } from "react";
 import * as THREE from "three";
-import { DDSLoader } from "three-stdlib";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
+import {DDSLoader} from "three-stdlib";
 import axios from "axios";
 import store from "../store/store";
 import mesh from "../texturedMesh.obj"
-import map from "../texture_1001.png"
-import {TextureLoader} from "three";
+import colorMap from "../texture_1001.png"
+import MeshroomProgress from "./MeshroomProgress";
+import CropWindow from "./CropWindow";
+import Scene from "./Scene";
+import ImagesDisplay from "./ImagesDisplay";
+import DbDispatcher from "../database/dbDispatcher";
+import {server} from "../index";
+
+
+const testData = [
+    { id: 1, datasets: 'user1_123131323222', status: 100,message: "sd" },
+    { id: 2, datasets: 'user1_123131323222', status: 100,message: "fff" },
+    { id: 3, datasets: 'user1_123131323222', status: 70,message: "CasdfACAS" },
+    { id: 4, datasets: 'user1_123131323222', status: 50,message: "CACAS" },
+    { id: 5, datasets: 'user1_123131323222', status: 30,message: "CACAasasdfS" },
+    { id: 6, datasets: 'user1_123131323222', status: 30,message: "CACAS" },
+    { id: 7, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
+    { id: 8, datasets: 'user1_123131323222', status: 0,message: "CACAasasdfS" },
+    { id: 9, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
+    { id: 10, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
+]
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
-const Scene = (props) => {
-    console.log(mesh);
-    const obj = useLoader(OBJLoader, props.model);
-    const texture = useLoader(TextureLoader, map);
-    const geometry = useMemo(() => {
-        let g;
-        obj.traverse((c) => {
-            if (c.type === "Mesh") {
-                g = c.geometry;
-            }
-        });
-        return g;
-    }, [obj]);
+const recoverFileFromDataURI = (dataURI, name) => {
+    let byteString = atob(dataURI.split(',')[1]);
 
-    // I've used meshPhysicalMaterial because the texture needs lights to be seen properly.
-    return (
-        <mesh geometry={geometry} scale={1}>
-            <meshPhysicalMaterial map={texture} />
-        </mesh>
-    );
-    /*console.log(colorMap);
+    let mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
-    return (
-        <mesh>
-            <primitive object={obj} scale={0.4}/>
-            <meshStandardMaterial map={colorMap} />
-        </mesh> );*/
-};
+    let ab = new ArrayBuffer(byteString.length);
+    let ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return new File([new Blob([ab], {type: mimeString})], name, {type: mimeString});
+}
+
+
+const defineOffset = (images) => {
+    if (!images || images.length === 0){
+        return 0;
+    }
+    let maximum = 0;
+    images.forEach((image) => {
+        if (+image.id > maximum){
+            maximum = +image.id;
+        }
+    });
+    return maximum + 1;
+}
 
 class ViewPanel extends React.Component {
     constructor(props){
         super(props);
+        //const storedImages = recoverImages() ?? [];
         this.state = {
-            //photos: [],
             images: [],
-            model: mesh
+            model: mesh,
+            texture: colorMap,
+            isMeshroomStarted: false,
+            progressMessage: "Photos sent to server",
+            progressValue: 10,
+            isCropOpen: false,
+            currentImage: null,
+            offset: 0,
+            projects: testData
+        }
+        this.statusHandler = null;
+        this.dbDispatcher = new DbDispatcher();
+    }
+
+    componentDidMount() {
+        const interval = 30000;
+
+        this.dbDispatcher.getImages()
+            .then((images) => {
+                console.log(images);
+                this.setState({
+                    images: images,
+                    offset: defineOffset(images)
+                })
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+
+        this.statusHandler = setInterval(() => {
+            this.handleStatus();
+        }, interval);
+        this.handleStatus();
+    }
+
+    componentWillUnmount() {
+        if (this.statusHandler){
+            clearInterval(this.progressHandler);
         }
     }
 
-    handleDelete = (name) => {
-        //console.log('invoked');
+    handleDelete = (id) => {
+        this.dbDispatcher.deleteImage(id);
         this.setState({
            images: this.state.images.filter((item) => {
-               return item.name !== name;
+               return item.id !== id;
            })
         });
     }
 
+    handleCrop = (id) => {
+        let image = this.state.images.filter((item) => {
+            return item.id === id;
+        });
+
+        if (image.length === 0){
+            return;
+        }
+
+        this.setState({
+            isCropOpen: true,
+            currentImage: image[0]
+        });
+    }
+
+    handleCropClose = (newImage) => {
+        this.setState({
+            isCropOpen: false
+        });
+
+        if (!newImage){
+            return;
+        }
+
+        this.state.currentImage.src = newImage;
+        this.dbDispatcher.updateImage(this.state.currentImage);
+        //this.state.currentImage.file = new File([newImage], this.state.currentImage.name);
+        let curImages = this.state.images;
+        this.setState({
+            images: curImages.map((item) => {
+                if (item.id !== this.state.currentImage.id){
+                    return item;
+                }
+                return this.state.currentImage;
+            })
+        })
+
+    }
+
     handleUpload = (event) => {
         let files = event.target.files;
-        for (let file of files){
+        let offset = this.state.offset;
+
+        Object.values(files).forEach((file, idx) => {
             let reader = new FileReader();
             reader.onloadend = () => {
-                let curImages = this.state.images;
-                console.log({
+                const image = {
                     src: reader.result,
                     name: file.name,
-                    file: file
-                })
-                curImages.push({
-                    src: reader.result,
-                    name: file.name,
-                    file: file
-                });
-                this.setState({
-                    images: curImages
+                    id: offset + idx
+                };
+                this.dbDispatcher.addImage(image);
+                this.setState((prevState) => {
+                    return {
+                        images: prevState.images.concat(image)
+                    };
                 });
             }
             reader.readAsDataURL(file);
-        }
+        });
+
+        this.setState({
+            offset: offset + Object.values(files).length
+        })
+
         document.getElementById("raised-button-file").value = "";
     }
 
-    handleStart = () => {
-        /*const b64toBlob = (b64Data, contentType='', sliceSize=512) => {
-            const byteCharacters = atob(b64Data);
-            const byteArrays = [];
-
-            for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-                const slice = byteCharacters.slice(offset, offset + sliceSize);
-
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-
-                const byteArray = new Uint16Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-
-            return new Blob(byteArrays, {type: contentType});
-        }*/
-
+    loadImages = () => {
         const formData = new FormData();
-        for (let image of this.state.images){
-            formData.append('images', image.file);
+        this.state.images.forEach((image) => {
+            formData.append('images', recoverFileFromDataURI(image.src, image.name));
+        });
+        return formData;
+    }
+
+    parseStatus = (data) => {
+        return data.map((item, idx) => {
+            return {
+                id: idx,
+                datasets: item["Created_at"],
+                status: +item["Status"],
+                message: item["Comment"]
+            }
+        })
+    }
+
+    handleStatus = () => {
+        let requestUrl = server + 'upload/status/';
+        const config = {
+            headers: {
+                'authorization': 'Bearer ' + store.getState().token
+            }
         }
 
-        let requestUrl = 'http://localhost:8000/upload/';
-        console.log(store.getState().token);
+        axios.get(requestUrl, config)
+            .then((response) => {
+                console.log(response);
+                this.setState({
+                    projects: this.parseStatus(response.data.projects)
+                });
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    }
+
+    handleStart = () => {
+        let requestUrl = server + 'upload/';
         const config = {
             headers: {
                 'content-type': 'multipart/form-data',
@@ -136,15 +237,25 @@ class ViewPanel extends React.Component {
             }
         }
 
-        axios.post(requestUrl, formData, config)
+        axios.post(requestUrl, this.loadImages(), config)
             .then((response) => {
-                console.log(response.data);
-                console.log(typeof response.data);
-                let uri = URL.createObjectURL(new Blob([response.data] , {type:'text/plain'}))
-                this.setState({ model:  uri});
-                console.log(uri);
+                console.log(response);
+
+                let obj = new Blob([response.data['obj']] , {type: 'text/plain'});
+                let png = recoverFileFromDataURI("data:image/png;base64," + response.data['png'], 'texture.png');
+
+                let objUri = URL.createObjectURL(obj);
+                let pngUri = URL.createObjectURL(png);
+
+                console.log(pngUri);
+
+                this.setState({
+                    model:  objUri,
+                    texture: pngUri
+                });
             })
             .catch((error) => {
+                //this.cancelProgress();
                 console.log(error);
             });
     }
@@ -164,20 +275,17 @@ class ViewPanel extends React.Component {
                         onChange={this.handleUpload}
                     />
 
-                    <ImagesDisplay delete={this.handleDelete} images={this.state.images}/>
+                    <ImagesDisplay
+                        delete={this.handleDelete}
+                        edit={this.handleCrop}
+                        images={this.state.images}
+                    />
 
                 </Grid>
                 <Grid item xl={6} md={6} xs={12}>
-                    <>
-                        <Typography variant={'h4'}> 3D model will be displayed here: </Typography>
-                        <Canvas style={{ maxHeight: '65vh'}}>
-                            <Suspense fallback={null}>
-                                <Scene model={this.state.model} />
-                                <OrbitControls />
-                                <Environment preset="sunset" background />
-                            </Suspense>
-                        </Canvas>
-                    </>
+                    <MeshroomProgress
+                        rows={this.state.projects}
+                    />
                 </Grid>
             </Grid>
             <Container data-testid={'control-panel'} maxWidth={'xl'} sx={{
@@ -193,78 +301,12 @@ class ViewPanel extends React.Component {
                 </label>
                 <Button style={{marginLeft: '1em'}} onClick={this.handleStart} > Start </Button>
             </Container>
+                <CropWindow
+                    isOpen={this.state.isCropOpen}
+                    onClose={this.handleCropClose}
+                    image={this.state.currentImage?.src}
+                />
             </>
-        );
-    }
-}
-
-class ImagesDisplay extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    displayImages(images){
-        if (images.length > 0){
-            let items = [];
-            for (let image of images){
-                //console.log(image);
-                items.push(
-                    <Grid item xl={3} md={4} xs={6} >
-                        <Card variant={'outlined'} sx={{
-                            marginTop: '1em',
-                            marginBottom: '1em',
-                            marginLeft: '1em',
-                            //display: 'inline-block'
-                        }}>
-                            <CardActionArea>
-                                <CardMedia
-                                    component="img"
-                                    image={image.src}
-                                    width={'100%'}
-                                    alt={'user photo'}
-                                />
-                                <CardContent>
-                                    <Typography color="text.secondary"> {image.name} </Typography>
-                                </CardContent>
-                            </CardActionArea>
-                            <CardActions >
-                                <IconButton  onClick={() => {return this.props.delete(image.name);}}>
-                                    <DeleteIcon />
-                                </IconButton>
-                                <IconButton >
-                                    <EditIcon/>
-                                </IconButton>
-
-                            </CardActions>
-                        </Card>
-                    </Grid>
-
-                );
-            }
-            return (
-                <Grid container align-items={'stretch'}>
-                    {items}
-                </Grid>
-            );
-        }
-        return null;
-    }
-
-    render(){
-        return (
-            <Paper elevation={6}>
-            <Box id={'images-panel'}
-                sx={{
-                    width: '100%',
-                    height: '65vh',
-                    overflow: 'auto'
-                }}
-            >
-
-                    {this.displayImages(this.props.images)}
-
-            </Box>
-            </Paper>
         );
     }
 }

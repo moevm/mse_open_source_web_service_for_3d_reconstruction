@@ -3,6 +3,7 @@ import {Button, Container, Link, Paper, TextField, Typography} from "@mui/materi
 import axios from "axios";
 import { Navigate } from "react-router-dom";
 import AuthDialog from "./AuthDialog";
+import {server} from "../index";
 
 class SignInTab extends React.Component {
     constructor(props){
@@ -59,7 +60,7 @@ class SignInTab extends React.Component {
             return;
         }
 
-        let requestUrl = 'http://localhost:8000/api/users/login/';
+        let requestUrl = server + 'api/users/login/';
 
         let requestData = {
             method: 'POST',
