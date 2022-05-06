@@ -9,11 +9,15 @@ _(Для каждой команды требуются права суперп�
 
 Перед запуском рекомендуется удалить имеющиеся docker volumes данного проекта:
 
-`docker volume rm 3d_test_media_volume 3d_test_postgres_data 3d_test_static_volume`
+```
+docker volume rm 3d_test_media_volume 3d_test_postgres_data 3d_test_static_volume
+```
 
 Для запуска Docker в корневой директории проекта выполните команду:
 
-`docker-compose -f docker-compose.prod.yml up --build`
+```
+docker-compose -f docker-compose.prod.yml up --build
+```
 
 Для первого запуска и после каждого удаления docker volumes требуется написать в отдельном терминале (в то время, когда docker уже запущен):
 
@@ -26,7 +30,9 @@ docker-compose exec backend python3 manage.py collectstatic --no-input
 
 Для остановки работы всех контейнеров выполните команду:
 
-`docker-compose down --remove-orphans`
+```
+docker-compose down --remove-orphans
+```
 
 ## Запуск проекта в Development-режиме
 
@@ -43,13 +49,17 @@ _(На данный момент запустить контейнеры мож�
 
 Для запуска Docker в корневой директории проекта выполните команду:
 
-`docker-compose up --build` (или `docker compose up --build`)
+```
+docker-compose up --build
+```
 
 Теперь можно открыть проект на http://localhost:3000
 
 Для остановки работы всех контейнеров выполните команду:
 
-`docker-compose down` (или `docker compose down`)
+```
+docker-compose down
+```
 
 ---
 
@@ -57,19 +67,19 @@ _(На данный момент запустить контейнеры мож�
 
 Пример для разработки backend'а:
 
-`docker-compose up frontend db --build` (или `docker compose up frontend db --build`) и локально запустить backend
+```docker-compose up frontend db --build``` и локально запустить backend
 
 Пример для разработки frontend'а:
 
-`docker-compose up backend db --build` (или `docker compose up backend db --build`) и локально запустить frontend
+```docker-compose up backend db --build``` и локально запустить frontend
 
 ### Запуск без Docker
 
 Для локального запуска frontend'а:
 
 1. Копируем директорию frontend и переходим в /frontend
-2. Устанавливаем зависимости `npm install`
-3. Запускаем `npm start` (откроется на http://localhost:3000)
+2. Устанавливаем зависимости ```npm install```
+3. Запускаем ```npm start``` (откроется на http://localhost:3000)
 
 При разработке использовался Node.js версии 16, поэтому рекомендуется работать с этой версией
 
@@ -90,18 +100,36 @@ _(На данный момент запустить контейнеры мож�
 
 1. Копируем директорию backend и переходим в /backend
 2. Если у Вас есть локально Meshroom, то перенесите его в текущую директорию под названием "Meshroom". Если нет, то введите следующее:
-   * `wget https://github.com/alicevision/meshroom/releases/download/v2021.1.0/Meshroom-2021.1.0-linux-cuda10.tar.gz`
-   * `tar --totals -xf Meshroom-2021.1.0-linux-cuda10.tar.gz`
-   * `rm Meshroom-2021.1.0-linux-cuda10.tar.gz`
-   * `mv Meshroom-2021.1.0-av2.4.0-centos7-cuda10.2 Meshroom`
+   ``` 
+   wget https://github.com/alicevision/meshroom/releases/download/v2021.1.0/Meshroom-2021.1.0-linux-cuda10.tar.gz
+   ```
+   ```
+   tar --totals -xf Meshroom-2021.1.0-linux-cuda10.tar.gz
+   ```
+   ```
+   rm Meshroom-2021.1.0-linux-cuda10.tar.gz
+   ```
+   ```
+   mv Meshroom-2021.1.0-av2.4.0-centos7-cuda10.2 Meshroom
+   ```
 3. Устанавливаем зависимости:
-   * `pip install -r requirements.txt`
-   * `apt update && apt install -y netcat`
+   ```
+   pip install -r requirements.txt
+   ```
+   ```
+   apt update && apt install -y netcat
+   ```
 4. Загружаем конфигурацию в бд (делать после каждого изменения структуры бд):
-   * `python3 manage.py makemigrations authentication upload`
-   * `python3 manage.py migrate`
+   ```
+   python3 manage.py makemigrations authentication upload
+   ```
+   ```
+   python3 manage.py migrate
+   ```
 6. Запускаем backend (по умолчанию http://localhost:8000):
-   * `python3 manage.py runserver`
+   ```
+   python3 manage.py runserver
+   ```
 
 При разработке использовался Python версии 3.10, поэтому рекомендуется работать с этой версией (Python версии <3.8 работать не будет)
 
