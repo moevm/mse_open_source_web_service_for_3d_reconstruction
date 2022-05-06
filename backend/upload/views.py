@@ -217,16 +217,19 @@ class DownloadView(APIView):
     def get(self, request, *args, **kwargs):
 
         project = request.GET.get('project', '')
+        # If key 'project' doesn't exist
         if project == '':
             return Response('Bad Request', status=status.HTTP_418_IM_A_TEAPOT)
 
         project_info = project.split("_")
 
+        # If user in 'project' doesn't match with user in authorization key
         if project_info[1] != str(request.user.id):
             return Response('Wrong user', status=status.HTTP_403_FORBIDDEN)
 
         dataset_instance = Dataset.objects.filter(user=request.user.id).filter(dataset_path="datasets/" + project)
 
+        # If there is no 'project' in DB
         if not dataset_instance:
             return Response('Result file was not found', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -251,5 +254,6 @@ class DownloadView(APIView):
 
             return response
 
+        # If file not found in local server
         except FileNotFoundError:
             return Response('Result file was not found', status=status.HTTP_418_IM_A_TEAPOT)
