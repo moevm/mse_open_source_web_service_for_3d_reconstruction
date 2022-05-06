@@ -160,4 +160,4 @@ REST_FRAMEWORK = {
     ),
 }
 
-CORS_ORIGIN_ALLOW_ALL = os.environ.get("DJANGO_CORS_ORIGIN_ALLOW_ALL", default=False) == 'True'
+CORS_ORIGIN_ALLOW_ALL = os.environ.get("DJANGO_CORS_ORIGIN_ALLOW_ALL", default='False') == 'True'
