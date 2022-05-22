@@ -19,11 +19,10 @@ class CropWindow extends React.Component {
     loadCroppedImage = () => {
         this.getCroppedImg(this.imageRef.current, this.state.completedCrop, 'cropped.png')
             .then((res) => {
-                const blobUrl = URL.createObjectURL(res);
                 this.setState({
-                    currentImage: blobUrl
+                    currentImage: res
                 })
-                this.props.onClose(blobUrl);
+                this.props.onClose(res);
             })
     }
 
@@ -54,6 +53,7 @@ class CropWindow extends React.Component {
                 file.name = fileName;
                 resolve(file);
             }, 'image/png');
+            canvas.remove();
         });
     }
 
@@ -77,6 +77,7 @@ class CropWindow extends React.Component {
         element.href = this.state.currentImage;
         element.download = "cropped.png";
         element.click();
+        element.remove();
     }
 
     render(){

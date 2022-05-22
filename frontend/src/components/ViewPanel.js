@@ -79,7 +79,7 @@ class ViewPanel extends React.Component {
             isCropOpen: false,
             currentImage: null,
             offset: 0,
-            projects: testData
+            projects: []
         }
         this.statusHandler = null;
         this.dbDispatcher = new DbDispatcher();
@@ -108,7 +108,7 @@ class ViewPanel extends React.Component {
 
     componentWillUnmount() {
         if (this.statusHandler){
-            clearInterval(this.progressHandler);
+            clearInterval(this.statusHandler);
         }
     }
 
@@ -144,20 +144,29 @@ class ViewPanel extends React.Component {
         if (!newImage){
             return;
         }
+        const updatedFile = new File([newImage], this.state.currentImage.name);
+        const updatedCurrentImage = {
+            src: URL.createObjectURL(updatedFile),
+            file: updatedFile,
+            name: this.state.currentImage.name,
+            id: this.state.currentImage.id
+        }
 
-        this.state.currentImage.src = newImage;
-        this.dbDispatcher.updateImage(this.state.currentImage);
-        //this.state.currentImage.file = new File([newImage], this.state.currentImage.name);
+        this.dbDispatcher.updateImage(updatedCurrentImage);
+
         let curImages = this.state.images;
         this.setState({
             images: curImages.map((item) => {
                 if (item.id !== this.state.currentImage.id){
                     return item;
                 }
-                return this.state.currentImage;
+                return updatedCurrentImage;
             })
-        })
+        });
 
+        this.setState({
+            currentImage: null
+        });
     }
 
     handleUpload = (event) => {
@@ -165,21 +174,18 @@ class ViewPanel extends React.Component {
         let offset = this.state.offset;
 
         Object.values(files).forEach((file, idx) => {
-            let reader = new FileReader();
-            reader.onloadend = () => {
-                const image = {
-                    src: reader.result,
-                    name: file.name,
-                    id: offset + idx
+            const image = {
+                src: URL.createObjectURL(file),
+                file: file,
+                name: file.name,
+                id: offset + idx
+            };
+            this.dbDispatcher.addImage(image);
+            this.setState((prevState) => {
+                return {
+                    images: prevState.images.concat(image)
                 };
-                this.dbDispatcher.addImage(image);
-                this.setState((prevState) => {
-                    return {
-                        images: prevState.images.concat(image)
-                    };
-                });
-            }
-            reader.readAsDataURL(file);
+            });
         });
 
         this.setState({
@@ -192,7 +198,7 @@ class ViewPanel extends React.Component {
     loadImages = () => {
         const formData = new FormData();
         this.state.images.forEach((image) => {
-            formData.append('images', recoverFileFromDataURI(image.src, image.name));
+            formData.append('images', image.file);
         });
         return formData;
     }
