@@ -6,9 +6,6 @@ import {
     Typography
 } from "@mui/material";
 import "../styles/ViewPanel.css"
-import { Canvas } from "@react-three/fiber";
-import {Environment, OrbitControls, useTexture} from "@react-three/drei";
-import { Suspense } from "react";
 import * as THREE from "three";
 import {DDSLoader} from "three-stdlib";
 import axios from "axios";
@@ -17,24 +14,9 @@ import mesh from "../texturedMesh.obj"
 import colorMap from "../texture_1001.png"
 import MeshroomProgress from "./MeshroomProgress";
 import CropWindow from "./CropWindow";
-import Scene from "./Scene";
 import ImagesDisplay from "./ImagesDisplay";
 import DbDispatcher from "../database/dbDispatcher";
 import {server} from "../index";
-
-
-const testData = [
-    { id: 1, datasets: 'user1_123131323222', status: 100,message: "sd" },
-    { id: 2, datasets: 'user1_123131323222', status: 100,message: "fff" },
-    { id: 3, datasets: 'user1_123131323222', status: 70,message: "CasdfACAS" },
-    { id: 4, datasets: 'user1_123131323222', status: 50,message: "CACAS" },
-    { id: 5, datasets: 'user1_123131323222', status: 30,message: "CACAasasdfS" },
-    { id: 6, datasets: 'user1_123131323222', status: 30,message: "CACAS" },
-    { id: 7, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-    { id: 8, datasets: 'user1_123131323222', status: 0,message: "CACAasasdfS" },
-    { id: 9, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-    { id: 10, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-]
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
@@ -68,7 +50,7 @@ const defineOffset = (images) => {
 class ViewPanel extends React.Component {
     constructor(props){
         super(props);
-        //const storedImages = recoverImages() ?? [];
+
         this.state = {
             images: [],
             model: mesh,
@@ -86,16 +68,19 @@ class ViewPanel extends React.Component {
     }
 
     componentDidMount() {
+        const restoreImagesURL = (images) => {
+            images.forEach((image) => {
+                image.src = URL.createObjectURL(image.file);
+            });
+            return images;
+        }
+
         const interval = 30000;
 
         this.dbDispatcher.getImages()
             .then((images) => {
-                console.log(images);
-                images.forEach((image) => {
-                    image.src = URL.createObjectURL(image.file);
-                });
                 this.setState({
-                    images: images,
+                    images: restoreImagesURL(images),
                     offset: defineOffset(images)
                 })
             })

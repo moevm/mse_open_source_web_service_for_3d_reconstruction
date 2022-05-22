@@ -13,16 +13,11 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import {saveImages} from "./ViewPanel";
 
 class ImagesDisplay extends React.Component {
     constructor(props) {
         super(props);
     }
-
-    /*componentDidUpdate(prevProps, prevState, snapshot) {
-        saveImages(this.props.images);
-    }*/
 
     displayImages(images){
         if (images.length > 0){
@@ -33,7 +28,8 @@ class ImagesDisplay extends React.Component {
                         <Card variant={'outlined'} sx={{
                             marginTop: '1em',
                             marginBottom: '1em',
-                            marginLeft: '1em',
+                            marginLeft: '0.5em',
+                            marginRight: '0.5em'
                         }}>
                             <CardActionArea>
                                 <CardMedia

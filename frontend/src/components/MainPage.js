@@ -1,5 +1,4 @@
 import React from 'react'
-import {Typography} from "@mui/material";
 import MainNavbar from "./MainNavbar";
 import InfoTab from "./InfoTab";
 import BoilerplateTab from "./BoilerplateTab";

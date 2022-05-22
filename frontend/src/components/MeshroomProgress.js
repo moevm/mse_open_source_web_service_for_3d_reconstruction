@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { withStyles } from '@material-ui/core/styles';
 import GetAppIcon from '@material-ui/icons/GetApp';
-import {server} from "../index";
 import store from "../store/store";
 import axios from "axios";
 
@@ -33,25 +32,6 @@ const StyledTableRow = withStyles((theme) => ({
         },
     },
 }))(TableRow);
-
-/*
---------------
-|  test data |
---------------
-
-[
-                { id: 1, datasets: 'user1_123131323222', status: 10,message: "sd" },
-                { id: 2, datasets: 'user1_123131323222', status: 10,message: "fff" },
-                { id: 3, datasets: 'user1_123131323222', status: 7,message: "CasdfACAS" },
-                { id: 4, datasets: 'user1_123131323222', status: 5,message: "CACAS" },
-                { id: 5, datasets: 'user1_123131323222', status: 3,message: "CACAasasdfS" },
-                { id: 6, datasets: 'user1_123131323222', status: 3,message: "CACAS" },
-                { id: 7, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-                { id: 8, datasets: 'user1_123131323222', status: 0,message: "CACAasasdfS" },
-                { id: 9, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-                { id: 10, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-            ]
-*/
 
 class MeshroomProgress extends React.Component {
     constructor(props){
@@ -104,10 +84,11 @@ class MeshroomProgress extends React.Component {
                 link.href = archiveUrl;
                 link.download = `${fileName}.zip`;
                 link.click();
+                link.remove();
             })
             .catch((err) => {
                 console.log(err);
-            })
+            });
     }
 
     isDownloadable(row){
