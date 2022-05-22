@@ -28,6 +28,10 @@ class DbDispatcher {
     getImages = async () => {
         return await db.images.toArray();
     }
+
+    deleteAllImages = async () => {
+        return await db.images.clear();
+    }
 }
 
 export default DbDispatcher;

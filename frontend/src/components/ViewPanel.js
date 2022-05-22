@@ -91,6 +91,9 @@ class ViewPanel extends React.Component {
         this.dbDispatcher.getImages()
             .then((images) => {
                 console.log(images);
+                images.forEach((image) => {
+                    image.src = URL.createObjectURL(image.file);
+                });
                 this.setState({
                     images: images,
                     offset: defineOffset(images)
@@ -246,7 +249,7 @@ class ViewPanel extends React.Component {
         axios.post(requestUrl, this.loadImages(), config)
             .then((response) => {
                 console.log(response);
-
+/*
                 let obj = new Blob([response.data['obj']] , {type: 'text/plain'});
                 let png = recoverFileFromDataURI("data:image/png;base64," + response.data['png'], 'texture.png');
 
@@ -258,7 +261,7 @@ class ViewPanel extends React.Component {
                 this.setState({
                     model:  objUri,
                     texture: pngUri
-                });
+                });*/
             })
             .catch((error) => {
                 //this.cancelProgress();
