@@ -282,6 +282,7 @@ class ViewPanel extends React.Component {
                 <Grid item xl={6} md={6} xs={12}>
                     <MeshroomProgress
                         rows={this.state.projects}
+                        handleStatus={this.handleStatus}
                     />
                 </Grid>
             </Grid>

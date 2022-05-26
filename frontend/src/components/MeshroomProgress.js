@@ -105,10 +105,11 @@ class MeshroomProgress extends React.Component {
             },
             responseType: 'blob'
         }
-        axios.get(removeUrl)
+        axios.get(removeUrl, config)
             .then((response) => {
                 console.log(response.data);
                 alert("Project was successfully removed!");
+                this.props.handleStatus();
             })
             .catch((err) => {
                 console.log(err);
@@ -129,7 +130,7 @@ class MeshroomProgress extends React.Component {
                 </TableCell>
             );
         }
-        return null;
+        return <TableCell/>;
     }
 
     isDownloadable(row){
