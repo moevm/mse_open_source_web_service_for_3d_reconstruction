@@ -10,6 +10,7 @@ import {
     TableRow,
     Typography
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { withStyles } from '@material-ui/core/styles';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import store from "../store/store";
@@ -62,6 +63,12 @@ class MeshroomProgress extends React.Component {
                     type: 'number',
                     width: 150,
                 },
+                {
+                    field: 'remove',
+                    headerName: 'Remove',
+                    type: 'number',
+                    width: 100,
+                },
             ],
             page: 0,
             rowsPerPage: 7
@@ -91,9 +98,43 @@ class MeshroomProgress extends React.Component {
             });
     }
 
+    removeResult = (removeUrl) =>{
+        const config = {
+            headers: {
+                'authorization': 'Bearer ' + store.getState().token
+            },
+            responseType: 'blob'
+        }
+        axios.get(removeUrl)
+            .then((response) => {
+                console.log(response.data);
+                alert("Project was successfully removed!");
+            })
+            .catch((err) => {
+                console.log(err);
+                alert("Project wasn't removed. Something went wrong.");
+            });
+    }
+
+    isRemovable(row){
+        if(row.isRemovable){
+            const removeURL = row.removeURL;
+            return (
+                <TableCell>
+                    <a onClick={() => {
+                        this.removeResult(removeURL);
+                    }} download>
+                        <DeleteIcon />
+                    </a>
+                </TableCell>
+            );
+        }
+        return null;
+    }
+
     isDownloadable(row){
         if(row.status === 100){
-            const downloadUrl = row.message;
+            const downloadUrl = row.downloadURL;
             const fileName = `Dataset: ${row.datasets}`;
             return (
                 <TableCell>
@@ -148,6 +189,7 @@ class MeshroomProgress extends React.Component {
                                             <TableCell>{row.datasets} </TableCell>
                                             <TableCell>{`${row.status}%`} </TableCell>
                                             {this.isDownloadable(row)}
+                                            {this.isRemovable(row)}
                                         </StyledTableRow>
                                         ))}
                                 </TableBody>

@@ -197,7 +197,10 @@ class ViewPanel extends React.Component {
                 id: idx,
                 datasets: item["Created_at"],
                 status: +item["Status"],
-                message: item["Comment"]
+                message: item["Comment"],
+                downloadURL: item["Download_url"] ?? null,
+                removeURL: item['Remove_url'] ?? null,
+                isRemovable: !!item['Is_removable']
             }
         })
     }
