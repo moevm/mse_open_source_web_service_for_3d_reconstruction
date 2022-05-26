@@ -10,6 +10,7 @@ from django.conf import settings
 from django.http import HttpResponse, FileResponse, JsonResponse
 import os
 import zipfile
+import shutil
 from io import BytesIO
 from pathlib import Path
 
@@ -212,7 +213,7 @@ class StatusView(APIView):
 
             if dataset_instance[i].comment != 'Waiting' and dataset_instance[i].comment != 'In progress':
                 project['Is_removable'] = True
-                project['Remove_url'] = "http://localhost:8000/upload/download/?project=user_{}_{}".format(request.user.id, text.slugify(dataset_instance[i].created_at))
+                project['Remove_url'] = "http://localhost:8000/upload/remove/?project=user_{}_{}".format(request.user.id, text.slugify(dataset_instance[i].created_at))
 
             projects.append(project)
 
@@ -238,7 +239,7 @@ class DownloadView(APIView):
         if project_info[1] != str(request.user.id):
             return Response('Wrong user', status=status.HTTP_403_FORBIDDEN)
 
-        dataset_instance = Dataset.objects.filter(user=request.user.id).filter(dataset_path="datasets/" + project)
+        dataset_instance = Dataset.objects.filter(user=request.user.id).get(dataset_path="datasets/" + project)
 
         # If there is no 'project' in DB
         if not dataset_instance:
@@ -268,3 +269,35 @@ class DownloadView(APIView):
         # If file not found in local server
         except FileNotFoundError:
             return Response('Result file was not found', status=status.HTTP_404_NOT_FOUND)
+
+
+class RemoveView(APIView):
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get(self, request, *args, **kwargs):
+
+        project = request.GET.get('project', '')
+        # If key 'project' doesn't exist
+        if project == '':
+            return Response('Bad Request', status=status.HTTP_400_BAD_REQUEST)
+
+        project_info = project.split("_")
+
+        # If user in 'project' doesn't match with user in authorization key
+        if project_info[1] != str(request.user.id):
+            return Response('Wrong user', status=status.HTTP_403_FORBIDDEN)
+
+        dataset_instance = Dataset.objects.filter(user=request.user.id).get(dataset_path="datasets/" + project)
+
+        # If there is no 'project' in DB
+        if not dataset_instance:
+            return Response('Object was not found', status=status.HTTP_404_NOT_FOUND)
+
+        # Delete project folder with all content
+        shutil.rmtree(Path.joinpath(settings.MEDIA_ROOT, 'datasets', project), ignore_errors=True)
+
+        # Delete project object from 'Dataset' table, which will cause deletion of all connected objects
+        dataset_instance.delete()
+
+        return Response('The object was removed', status=status.HTTP_200_OK)
