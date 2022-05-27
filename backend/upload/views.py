@@ -236,10 +236,10 @@ class DownloadView(APIView):
         project_info = project.split("_")
 
         # If user in 'project' doesn't match with user in authorization key
-        if project_info[1] != str(request.user.id):
+        if len(project_info) != 3 or project_info[0] != 'user' or project_info[1] != str(request.user.id):
             return Response('Wrong user', status=status.HTTP_403_FORBIDDEN)
 
-        dataset_instance = Dataset.objects.filter(user=request.user.id).get(dataset_path="datasets/" + project)
+        dataset_instance = Dataset.objects.filter(user=request.user.id).filter(dataset_path="datasets/" + project)
 
         # If there is no 'project' in DB
         if not dataset_instance:
@@ -285,10 +285,10 @@ class RemoveView(APIView):
         project_info = project.split("_")
 
         # If user in 'project' doesn't match with user in authorization key
-        if project_info[1] != str(request.user.id):
+        if len(project_info) != 3 or project_info[0] != 'user' or project_info[1] != str(request.user.id):
             return Response('Wrong user', status=status.HTTP_403_FORBIDDEN)
 
-        dataset_instance = Dataset.objects.filter(user=request.user.id).get(dataset_path="datasets/" + project)
+        dataset_instance = Dataset.objects.filter(user=request.user.id).filter(dataset_path="datasets/" + project)
 
         # If there is no 'project' in DB
         if not dataset_instance:
