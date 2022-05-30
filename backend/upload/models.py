@@ -16,9 +16,15 @@ class Dataset(models.Model):
     comment = models.CharField(max_length=255, default="")
 
     def __str__(self):
-        return self.user.username
+        return '{0}: {1}'.format(self.user.username, self.dataset_path)
 
 
 class Image(models.Model):
     dataset = models.ForeignKey(to=Dataset, null=False, on_delete=models.CASCADE)
     image = models.ImageField(upload_to=user_directory_path)
+
+    def __str__(self):
+        return '{0}: {1}'.format(
+            self.dataset.user.username,
+            self.image.name,
+        )
