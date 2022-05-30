@@ -1,6 +1,5 @@
 import React from 'react'
 import {Button, Container, Link, Paper, TextField, Typography} from "@mui/material";
-import axios from "axios";
 import {Navigate} from "react-router-dom";
 import AuthDialog from "./AuthDialog";
 import {server} from "../index";

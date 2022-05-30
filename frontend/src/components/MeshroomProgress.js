@@ -10,9 +10,9 @@ import {
     TableRow,
     Typography
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { withStyles } from '@material-ui/core/styles';
 import GetAppIcon from '@material-ui/icons/GetApp';
-import {server} from "../index";
 import store from "../store/store";
 import axios from "axios";
 
@@ -33,25 +33,6 @@ const StyledTableRow = withStyles((theme) => ({
         },
     },
 }))(TableRow);
-
-/*
---------------
-|  test data |
---------------
-
-[
-                { id: 1, datasets: 'user1_123131323222', status: 10,message: "sd" },
-                { id: 2, datasets: 'user1_123131323222', status: 10,message: "fff" },
-                { id: 3, datasets: 'user1_123131323222', status: 7,message: "CasdfACAS" },
-                { id: 4, datasets: 'user1_123131323222', status: 5,message: "CACAS" },
-                { id: 5, datasets: 'user1_123131323222', status: 3,message: "CACAasasdfS" },
-                { id: 6, datasets: 'user1_123131323222', status: 3,message: "CACAS" },
-                { id: 7, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-                { id: 8, datasets: 'user1_123131323222', status: 0,message: "CACAasasdfS" },
-                { id: 9, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-                { id: 10, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-            ]
-*/
 
 class MeshroomProgress extends React.Component {
     constructor(props){
@@ -82,6 +63,12 @@ class MeshroomProgress extends React.Component {
                     type: 'number',
                     width: 150,
                 },
+                {
+                    field: 'remove',
+                    headerName: 'Remove',
+                    type: 'number',
+                    width: 100,
+                },
             ],
             page: 0,
             rowsPerPage: 7
@@ -104,15 +91,51 @@ class MeshroomProgress extends React.Component {
                 link.href = archiveUrl;
                 link.download = `${fileName}.zip`;
                 link.click();
+                link.remove();
             })
             .catch((err) => {
                 console.log(err);
+            });
+    }
+
+    removeResult = (removeUrl) =>{
+        const config = {
+            headers: {
+                'authorization': 'Bearer ' + store.getState().token
+            },
+            responseType: 'blob'
+        }
+        axios.get(removeUrl, config)
+            .then((response) => {
+                console.log(response.data);
+                alert("Project was successfully removed!");
+                this.props.handleStatus();
             })
+            .catch((err) => {
+                console.log(err);
+                alert("Project wasn't removed. Something went wrong.");
+            });
+    }
+
+    isRemovable(row){
+        if(row.isRemovable){
+            const removeURL = row.removeURL;
+            return (
+                <TableCell>
+                    <a onClick={() => {
+                        this.removeResult(removeURL);
+                    }} download>
+                        <DeleteIcon />
+                    </a>
+                </TableCell>
+            );
+        }
+        return <TableCell/>;
     }
 
     isDownloadable(row){
         if(row.status === 100){
-            const downloadUrl = row.message;
+            const downloadUrl = row.downloadURL;
             const fileName = `Dataset: ${row.datasets}`;
             return (
                 <TableCell>
@@ -167,6 +190,7 @@ class MeshroomProgress extends React.Component {
                                             <TableCell>{row.datasets} </TableCell>
                                             <TableCell>{`${row.status}%`} </TableCell>
                                             {this.isDownloadable(row)}
+                                            {this.isRemovable(row)}
                                         </StyledTableRow>
                                         ))}
                                 </TableBody>

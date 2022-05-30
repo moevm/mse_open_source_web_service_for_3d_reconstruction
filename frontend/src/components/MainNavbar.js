@@ -1,6 +1,5 @@
 import React from 'react'
-import {AppBar, Button, Container, createTheme, IconButton, ThemeProvider, Toolbar, Typography} from "@mui/material";
-import MenuIcon from '@mui/icons-material/Menu';
+import {AppBar, Button, Container, createTheme, ThemeProvider, Toolbar} from "@mui/material";
 import store from "../store/store";
 
 const darkTheme = createTheme({

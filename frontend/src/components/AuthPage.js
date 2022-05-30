@@ -1,5 +1,5 @@
 import React from 'react'
-import {Container, Typography} from "@mui/material";
+import {Container} from "@mui/material";
 import SignUpTab from "./SignUpTab";
 import SignInTab from "./SignInTab";
 

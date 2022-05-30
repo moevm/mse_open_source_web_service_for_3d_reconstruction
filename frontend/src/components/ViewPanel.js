@@ -6,9 +6,6 @@ import {
     Typography
 } from "@mui/material";
 import "../styles/ViewPanel.css"
-import { Canvas } from "@react-three/fiber";
-import {Environment, OrbitControls, useTexture} from "@react-three/drei";
-import { Suspense } from "react";
 import * as THREE from "three";
 import {DDSLoader} from "three-stdlib";
 import axios from "axios";
@@ -17,24 +14,9 @@ import mesh from "../texturedMesh.obj"
 import colorMap from "../texture_1001.png"
 import MeshroomProgress from "./MeshroomProgress";
 import CropWindow from "./CropWindow";
-import Scene from "./Scene";
 import ImagesDisplay from "./ImagesDisplay";
 import DbDispatcher from "../database/dbDispatcher";
 import {server} from "../index";
-
-
-const testData = [
-    { id: 1, datasets: 'user1_123131323222', status: 100,message: "sd" },
-    { id: 2, datasets: 'user1_123131323222', status: 100,message: "fff" },
-    { id: 3, datasets: 'user1_123131323222', status: 70,message: "CasdfACAS" },
-    { id: 4, datasets: 'user1_123131323222', status: 50,message: "CACAS" },
-    { id: 5, datasets: 'user1_123131323222', status: 30,message: "CACAasasdfS" },
-    { id: 6, datasets: 'user1_123131323222', status: 30,message: "CACAS" },
-    { id: 7, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-    { id: 8, datasets: 'user1_123131323222', status: 0,message: "CACAasasdfS" },
-    { id: 9, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-    { id: 10, datasets: 'user1_123131323222', status: 0,message: "CACAS" },
-]
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
@@ -68,7 +50,7 @@ const defineOffset = (images) => {
 class ViewPanel extends React.Component {
     constructor(props){
         super(props);
-        //const storedImages = recoverImages() ?? [];
+
         this.state = {
             images: [],
             model: mesh,
@@ -79,20 +61,26 @@ class ViewPanel extends React.Component {
             isCropOpen: false,
             currentImage: null,
             offset: 0,
-            projects: testData
+            projects: []
         }
         this.statusHandler = null;
         this.dbDispatcher = new DbDispatcher();
     }
 
     componentDidMount() {
+        const restoreImagesURL = (images) => {
+            images.forEach((image) => {
+                image.src = URL.createObjectURL(image.file);
+            });
+            return images;
+        }
+
         const interval = 30000;
 
         this.dbDispatcher.getImages()
             .then((images) => {
-                console.log(images);
                 this.setState({
-                    images: images,
+                    images: restoreImagesURL(images),
                     offset: defineOffset(images)
                 })
             })
@@ -108,7 +96,7 @@ class ViewPanel extends React.Component {
 
     componentWillUnmount() {
         if (this.statusHandler){
-            clearInterval(this.progressHandler);
+            clearInterval(this.statusHandler);
         }
     }
 
@@ -144,20 +132,29 @@ class ViewPanel extends React.Component {
         if (!newImage){
             return;
         }
+        const updatedFile = new File([newImage], this.state.currentImage.name);
+        const updatedCurrentImage = {
+            src: URL.createObjectURL(updatedFile),
+            file: updatedFile,
+            name: this.state.currentImage.name,
+            id: this.state.currentImage.id
+        }
 
-        this.state.currentImage.src = newImage;
-        this.dbDispatcher.updateImage(this.state.currentImage);
-        //this.state.currentImage.file = new File([newImage], this.state.currentImage.name);
+        this.dbDispatcher.updateImage(updatedCurrentImage);
+
         let curImages = this.state.images;
         this.setState({
             images: curImages.map((item) => {
                 if (item.id !== this.state.currentImage.id){
                     return item;
                 }
-                return this.state.currentImage;
+                return updatedCurrentImage;
             })
-        })
+        });
 
+        this.setState({
+            currentImage: null
+        });
     }
 
     handleUpload = (event) => {
@@ -165,21 +162,18 @@ class ViewPanel extends React.Component {
         let offset = this.state.offset;
 
         Object.values(files).forEach((file, idx) => {
-            let reader = new FileReader();
-            reader.onloadend = () => {
-                const image = {
-                    src: reader.result,
-                    name: file.name,
-                    id: offset + idx
+            const image = {
+                src: URL.createObjectURL(file),
+                file: file,
+                name: file.name,
+                id: offset + idx
+            };
+            this.dbDispatcher.addImage(image);
+            this.setState((prevState) => {
+                return {
+                    images: prevState.images.concat(image)
                 };
-                this.dbDispatcher.addImage(image);
-                this.setState((prevState) => {
-                    return {
-                        images: prevState.images.concat(image)
-                    };
-                });
-            }
-            reader.readAsDataURL(file);
+            });
         });
 
         this.setState({
@@ -192,7 +186,7 @@ class ViewPanel extends React.Component {
     loadImages = () => {
         const formData = new FormData();
         this.state.images.forEach((image) => {
-            formData.append('images', recoverFileFromDataURI(image.src, image.name));
+            formData.append('images', image.file);
         });
         return formData;
     }
@@ -203,7 +197,10 @@ class ViewPanel extends React.Component {
                 id: idx,
                 datasets: item["Created_at"],
                 status: +item["Status"],
-                message: item["Comment"]
+                message: item["Comment"],
+                downloadURL: item["Download_url"] ?? null,
+                removeURL: item['Remove_url'] ?? null,
+                isRemovable: !!item['Is_removable']
             }
         })
     }
@@ -240,7 +237,7 @@ class ViewPanel extends React.Component {
         axios.post(requestUrl, this.loadImages(), config)
             .then((response) => {
                 console.log(response);
-
+/*
                 let obj = new Blob([response.data['obj']] , {type: 'text/plain'});
                 let png = recoverFileFromDataURI("data:image/png;base64," + response.data['png'], 'texture.png');
 
@@ -252,7 +249,7 @@ class ViewPanel extends React.Component {
                 this.setState({
                     model:  objUri,
                     texture: pngUri
-                });
+                });*/
             })
             .catch((error) => {
                 //this.cancelProgress();
@@ -285,6 +282,7 @@ class ViewPanel extends React.Component {
                 <Grid item xl={6} md={6} xs={12}>
                     <MeshroomProgress
                         rows={this.state.projects}
+                        handleStatus={this.handleStatus}
                     />
                 </Grid>
             </Grid>
