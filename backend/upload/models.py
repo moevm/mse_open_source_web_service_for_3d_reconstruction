@@ -13,6 +13,7 @@ class Dataset(models.Model):
     created_at = models.DateTimeField()
     images_count = models.IntegerField(default=0)
     status = models.IntegerField(default=0)
+    comment = models.CharField(max_length=255, default="")
 
     def __str__(self):
         return self.user.username

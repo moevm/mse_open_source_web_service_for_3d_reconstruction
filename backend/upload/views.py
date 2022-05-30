@@ -2,14 +2,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers
 from .serializers import DatasetSerializer, ImageSerializer
-from .models import Dataset
+from .models import Dataset, Image
 from django.utils import timezone, text, dateformat
 from django.conf import settings
 from django.http import HttpResponse, FileResponse, JsonResponse
 import os
 import zipfile
+import shutil
 from io import BytesIO
 from pathlib import Path
 
@@ -34,22 +35,38 @@ class UploadView(APIView):
                 'dataset_path': 'datasets/user_{}_{}'.format(request.user.id, text.slugify(timestamp)),
                 'images_count': len(images),
                 'created_at': timestamp,
-                'status': 0
+                'status': 0,
+                'comment': 'Waiting'
             }
         )
         dataset_serializer.is_valid(raise_exception=True)
         dataset_instance = dataset_serializer.save()
 
-        for image in images:
-            wrapped_image = {
-                'dataset': dataset_instance.id,
-                'image': image
-            }
-            image_serializer = ImageSerializer(data=wrapped_image)
-            image_serializer.is_valid(raise_exception=True)
-            image_serializer.save()
+        try:
+            for image in images:
+                wrapped_image = {
+                    'dataset': dataset_instance.id,
+                    'image': image
+                }
+                image_serializer = ImageSerializer(data=wrapped_image)
+                image_serializer.is_valid(raise_exception=True)
+                image_serializer.save()
+
+        except serializers.ValidationError:
+            Image.objects.filter(dataset=dataset_instance.id).delete()
+            update = Dataset.objects.get(id=dataset_instance.id)
+            if update:
+                update.comment = 'Bad pictures'
+                update.save()
+
+            return Response('Incorrect name or value of pictures', status=status.HTTP_400_BAD_REQUEST)
 
         # Launch Meshroom
+        update = Dataset.objects.get(id=dataset_instance.id)
+        if update:
+            update.comment = 'In progress'
+            update.save()
+
         img_path = settings.MEDIA_ROOT / dataset_instance.dataset_path
         python3_result_code = os.system('python3 -V')
         if python3_result_code == 0:
@@ -76,22 +93,32 @@ class UploadView(APIView):
                 # with open(Path.joinpath(img_path, 'result', 'texturedMesh.mtl'), "r") as f:
                 #     response['mtl'] = f.read()
 
-                # TODO: Change 10 to variable
-                update = Dataset(id=dataset_instance.id,
-                                 user=dataset_instance.user,
-                                 dataset_path=dataset_instance.dataset_path,
-                                 images_count=dataset_instance.images_count,
-                                 created_at=dataset_instance.created_at,
-                                 status=10)
-                update.save()
+                update = Dataset.objects.get(id=dataset_instance.id)
+                if update:
+                    update.comment = 'Complete'
+                    update.save()
 
                 return JsonResponse(response, status=status.HTTP_200_OK)
 
             except FileNotFoundError:
-                return Response('Result file was not found', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                update = Dataset.objects.get(id=dataset_instance.id)
+                if update:
+                    update.comment = 'Error'
+                    update.save()
+
+                Image.objects.filter(dataset=dataset_instance.id).delete()
+
+                return Response('Result file was not found', status=status.HTTP_404_NOT_FOUND)
 
         else:
-            return Response('Meshroom internal error', status=status.HTTP_418_IM_A_TEAPOT)
+            update = Dataset.objects.get(id=dataset_instance.id)
+            if update:
+                update.comment = 'Error'
+                update.save()
+
+            Image.objects.filter(dataset=dataset_instance.id).delete()
+
+            return Response('Meshroom internal error', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class StatusView(APIView):
@@ -114,9 +141,6 @@ class StatusView(APIView):
                    "Texturing",
                    "Publish"]
 
-        # List of indexes of valid lines from DB (with existing dataset folder)
-        valid_dataset_index = list(range(dataset_instance.count()))
-
         # Every meshroom step have corresponding status, "Comlete" status is amount of all steps + 1
         complete_status = len(folders) + 1
 
@@ -130,60 +154,66 @@ class StatusView(APIView):
                     if dataset_instance[i].status == 0:
                         continue
                     else:
-                        valid_dataset_index.remove(i)
-                        continue
+                        update = Dataset.objects.get(id=dataset_instance[i].id)
+                        if update:
+                            update.comment = 'Error'
+                            update.save()
 
                 # If project have last status and result with files exist in local - valid, if no result - invalid
-                if dataset_instance[i].status == complete_status:
-                    if 'result' in os.listdir(path=img_path) and len(os.listdir(path=Path.joinpath(img_path, 'result'))) >= 3:
-                        continue
+                if dataset_instance[i].comment == 'Complete':
+                    if 'result' in os.listdir(path=img_path) and len(
+                            os.listdir(path=Path.joinpath(img_path, 'result'))) >= 3:
+                        if dataset_instance[i].status == complete_status:
+                            continue
                     else:
-                        valid_dataset_index.remove(i)
-                        continue
+                        update = Dataset.objects.get(id=dataset_instance[i].id)
+                        if update:
+                            update.comment = 'Error'
+                            update.save()
 
                 # Update curr project status
                 for curr_status in range(1, complete_status):
-                    numeric_folder = os.listdir(path=Path.joinpath(img_path, 'cache', folders[curr_status-1]))[0]
+                    numeric_folder = os.listdir(path=Path.joinpath(img_path, 'cache', folders[curr_status - 1]))[0]
                     # In this folders file "status" is already exist, if that's all, this step in progress
-                    if len(os.listdir(path=Path.joinpath(img_path, 'cache', folders[curr_status-1], numeric_folder))) < 2:
-                        update = Dataset(id=dataset_instance[i].id,
-                                         user=dataset_instance[i].user,
-                                         dataset_path=dataset_instance[i].dataset_path,
-                                         images_count=dataset_instance[i].images_count,
-                                         created_at=dataset_instance[i].created_at,
-                                         status=curr_status)
-                        update.save()
+                    if len(os.listdir(
+                            path=Path.joinpath(img_path, 'cache', folders[curr_status - 1], numeric_folder))) < 2:
+                        update = Dataset.objects.get(id=dataset_instance[i].id)
+                        if update:
+                            update.status = curr_status
+                            update.save()
                         break
 
                 # Give last status if result exist
-                if 'result' in os.listdir(path=img_path) and len(os.listdir(path=Path.joinpath(img_path, 'result'))) >= 3:
-                    update = Dataset(id=dataset_instance[i].id,
-                                     user=dataset_instance[i].user,
-                                     dataset_path=dataset_instance[i].dataset_path,
-                                     images_count=dataset_instance[i].images_count,
-                                     created_at=dataset_instance[i].created_at,
-                                     status=complete_status)
-                    update.save()
+                if 'result' in os.listdir(path=img_path) and len(
+                        os.listdir(path=Path.joinpath(img_path, 'result'))) >= 3:
+                    update = Dataset.objects.get(id=dataset_instance[i].id)
+                    if update:
+                        update.status = complete_status
+                        update.save()
 
             # If folder with dataset, cache or result doesn't exist, but DB gave info about it
             except FileNotFoundError:
-                valid_dataset_index.remove(i)
+                update = Dataset.objects.get(id=dataset_instance[i].id)
+                if update:
+                    update.comment = 'Error'
+                    update.save()
                 continue
 
         projects = []
 
-        for i in valid_dataset_index:
-            if dataset_instance[i].status == 0:
-                comment = "Waiting"
-            # Link to download curr project
-            elif dataset_instance[i].status == complete_status:
-                comment = "http://localhost:8000/upload/download/?project=user_{}_{}".format(request.user.id, text.slugify(dataset_instance[i].created_at))
-            else:
-                comment = "In progress"
+        for i in range(dataset_instance.count()):
 
             project = {'Created_at': dateformat.format(dataset_instance[i].created_at, "M j Y H:i:s"),
                        'Status': "{}".format(int(dataset_instance[i].status * (1 / complete_status) * 100)),
-                       'Comment': comment}
+                       'Comment': dataset_instance[i].comment,
+                       'Is_removable': False}
+
+            if dataset_instance[i].comment == 'Complete':
+                project['Download_url'] = "http://localhost:8000/upload/download/?project=user_{}_{}".format(request.user.id, text.slugify(dataset_instance[i].created_at))
+
+            if dataset_instance[i].comment != 'Waiting' and dataset_instance[i].comment != 'In progress':
+                project['Is_removable'] = True
+                project['Remove_url'] = "http://localhost:8000/upload/remove/?project=user_{}_{}".format(request.user.id, text.slugify(dataset_instance[i].created_at))
 
             projects.append(project)
 
@@ -201,19 +231,19 @@ class DownloadView(APIView):
         project = request.GET.get('project', '')
         # If key 'project' doesn't exist
         if project == '':
-            return Response('Bad Request', status=status.HTTP_418_IM_A_TEAPOT)
+            return Response('Bad Request', status=status.HTTP_400_BAD_REQUEST)
 
         project_info = project.split("_")
 
         # If user in 'project' doesn't match with user in authorization key
-        if project_info[1] != str(request.user.id):
+        if len(project_info) != 3 or project_info[0] != 'user' or project_info[1] != str(request.user.id):
             return Response('Wrong user', status=status.HTTP_403_FORBIDDEN)
 
         dataset_instance = Dataset.objects.filter(user=request.user.id).filter(dataset_path="datasets/" + project)
 
         # If there is no 'project' in DB
         if not dataset_instance:
-            return Response('Result file was not found', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response('Result file was not found', status=status.HTTP_404_NOT_FOUND)
 
         try:
             # TODO: Maybe there are several .png files. You should consider this case.
@@ -238,4 +268,36 @@ class DownloadView(APIView):
 
         # If file not found in local server
         except FileNotFoundError:
-            return Response('Result file was not found', status=status.HTTP_418_IM_A_TEAPOT)
+            return Response('Result file was not found', status=status.HTTP_404_NOT_FOUND)
+
+
+class RemoveView(APIView):
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get(self, request, *args, **kwargs):
+
+        project = request.GET.get('project', '')
+        # If key 'project' doesn't exist
+        if project == '':
+            return Response('Bad Request', status=status.HTTP_400_BAD_REQUEST)
+
+        project_info = project.split("_")
+
+        # If user in 'project' doesn't match with user in authorization key
+        if len(project_info) != 3 or project_info[0] != 'user' or project_info[1] != str(request.user.id):
+            return Response('Wrong user', status=status.HTTP_403_FORBIDDEN)
+
+        dataset_instance = Dataset.objects.filter(user=request.user.id).filter(dataset_path="datasets/" + project)
+
+        # If there is no 'project' in DB
+        if not dataset_instance:
+            return Response('Object was not found', status=status.HTTP_404_NOT_FOUND)
+
+        # Delete project folder with all content
+        shutil.rmtree(Path.joinpath(settings.MEDIA_ROOT, 'datasets', project), ignore_errors=True)
+
+        # Delete project object from 'Dataset' table, which will cause deletion of all connected objects
+        dataset_instance.delete()
+
+        return Response('The object was removed', status=status.HTTP_200_OK)
