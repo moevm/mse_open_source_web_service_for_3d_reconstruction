@@ -157,14 +157,14 @@ docker-compose -f docker-compose.dev.yml up backend db --build
 
 Авторизация пользователя:
 
-![authorization](https://user-images.githubusercontent.com/54911137/167158242-e1efbfb6-49be-4ac0-9f77-74ca7333657d.gif)
+![authorization](https://user-images.githubusercontent.com/54960990/171723360-d0dfa437-6623-4192-9507-429d74623789.gif)
 
 Загрузка фотографий на сервер:
 
-![choose](https://user-images.githubusercontent.com/54911137/167158284-40968857-da65-4e7f-b897-8ffc6dcee1a3.gif)
+![choose](https://user-images.githubusercontent.com/54960990/171723796-6ddf0f7d-99d3-4423-8cdc-1ea2998ef1cb.gif)
 
-Скачивание 3D-объекта(результата работы meshroom на сервере):
+Скачивание 3D-объекта(результата работы meshroom на сервере) и его удаление:
 
-![download](https://user-images.githubusercontent.com/54911137/167158358-39e97c5c-91ce-42fa-8474-83ca4f7e4183.gif)
+![download_and_delete](https://user-images.githubusercontent.com/54960990/171723958-c69779c7-818b-4292-b9c5-61df6f071780.gif)
 
-Полный цикл работы приложения на датасете из трех изображений по [ссылке](https://drive.google.com/file/d/1hS83ccNoU1ThuXYxbfVh6diIyp7foyfB/view)
+Полный цикл работы приложения на датасете из трех изображений можно увидеть по [ссылке](https://drive.google.com/file/d/1PicWHrvPjL_7aqpXQ3ev_oL9SSGZpAoR/view?usp=sharing)
