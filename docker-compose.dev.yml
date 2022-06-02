@@ -7,6 +7,8 @@ services:
     container_name: "3d_db"
     image: postgres:14
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -23,8 +25,6 @@ services:
       - "8000:8000"
     env_file:
       - ./.env.dev
-    depends_on:
-      - db
 
   frontend:
     container_name: "3d_frontend"
@@ -32,8 +32,6 @@ services:
     build: ./frontend
     ports:
       - "3000:3000"
-    depends_on:
-      - backend
 
 volumes:
   postgres_data:
