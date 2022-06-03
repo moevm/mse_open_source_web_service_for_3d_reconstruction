@@ -14,7 +14,7 @@ _(Для каждой команды требуются права суперп�
 Перед запуском рекомендуется удалить имеющиеся docker volumes данного проекта:
 
 ```
-docker compose -f docker-compose.prod.yml down -v
+docker-compose -f docker-compose.prod.yml down -v
 ```
 
 Для запуска Docker в корневой директории проекта выполните команду:
@@ -81,14 +81,14 @@ docker-compose -f docker-compose.dev.yml down
 Пример для разработки backend'а:
 
 ```
-docker-compose -f docker-compose.dev.yml up frontend db --build
+docker-compose -f docker-compose.dev.yml up --build frontend db
 ```
 Затем можно [локально запустить backend](#локальный-запуск-backend)
 
 Пример для разработки frontend'а:
 
 ```
-docker-compose -f docker-compose.dev.yml up backend db --build
+docker-compose -f docker-compose.dev.yml up --build backend db
 ```
 Затем можно [локально запустить frontend](#локальный-запуск-frontend)
 
@@ -141,7 +141,7 @@ docker-compose -f docker-compose.dev.yml up backend db --build
 4. При изменении моделей необходимо выполнить команду для передачи изменении в БД:
    ```
    python3 manage.py makemigrations <names_of_apps_where_model_has_changed>
-   ```
+   ```  
    Затем необходимо выполнить миграции. Их также нужно выполнять после удаления volume, в котором хранятся данные БД.
    ```
    python3 manage.py migrate
